@@ -1,6 +1,7 @@
 #include <stdio.h>
+#include <GL/glew.h>
 #include <GL/freeglut.h>
-
+#include "graphicscore.h"
 
 void reshape(int w, int h)
 {
@@ -38,6 +39,12 @@ int main(int argc, char **argv)
 {
 	glutInit( &argc, argv );
 	glutCreateWindow( "Test" );
+	if( glewInit() != GLEW_OK )
+	{
+		fprintf( stderr, "Error: GLEW Fault.\n" );
+		return 0;
+	}
+
 	glutDisplayFunc( display );
 	glutReshapeFunc( reshape );
 	glutMainLoop();

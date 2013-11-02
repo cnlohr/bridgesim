@@ -1,7 +1,7 @@
 OUTS := servertest clientonly
 all : $(OUTS)
 
-CFLAGS:=-Os -fPIC
+CFLAGS:=-Os -fPIC -I../util
 LDFLAGS:=-lpthread
 
 cent.so : cent.o ../util/os_generic.o chash.o

@@ -21,4 +21,4 @@ def my_callback_function( conn, data, ids ):
 
 server_handle = StartCentServer(b"0.0.0.0", 8553);
 gencallback = CENTCB(my_callback_function); #in global space to keep garbage collection from hitting it
-CentServerAddCB( server_handle, b"/*", CENTCB(my_callback_function), 44 );
+CentServerAddCB( server_handle, b"/*", gencallback, 44 )

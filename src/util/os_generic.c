@@ -47,9 +47,9 @@ double OGGetFileTime( const char * file )
 }
 
 
-og_thread_t OGCreateThread( void * (void*routine)( void * ), void * parameter )
+og_thread_t OGCreateThread( void * (*routine)( void * ), void * parameter )
 {
-	return (og_thread_t)CreateThread( 0, 0, (LPTHREAD_START_ROUTINE)function, parameter, 0, 0 );
+	return (og_thread_t)CreateThread( 0, 0, (LPTHREAD_START_ROUTINE)routine, parameter, 0, 0 );
 }
 
 void * OGJoinThread( og_thread_t ot )

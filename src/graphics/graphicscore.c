@@ -10,6 +10,7 @@
 
 unsigned char * ReadDataFile( const char * name )
 {
+	int r;
 	FILE * f = fopen( name, "rb" );
 	if( !f )
 	{
@@ -20,7 +21,13 @@ unsigned char * ReadDataFile( const char * name )
 	fseek( f, 0, SEEK_SET );
 
 	unsigned char * ret = malloc( len + 1);
-	fread( ret, len, 1, f );
+	r = fread( ret, len, 1, f );
+	if( r < 1 )
+	{
+		free( ret );
+		fclose( f );
+		return 0;
+	}
 	fclose( f );
 	ret[len] = 0;
 	return ret;
@@ -163,8 +170,68 @@ cancel:
 }
 
 
-void ApplyShader( struct Shader * shader )
+struct UniformMatch * UniformMatchMake( const char* name, float * data, int intcount, int floatcount, struct UniformMatch * prev )
+{
+	int i;
+	struct UniformMatch * m = malloc( sizeof( struct UniformMatch ) );
+	m->next = prev;
+	m->name = name;
+	m->data = data;
+	m->intcount = intcount;
+	m->floatcount = floatcount;
+
+	return m;
+}
+
+
+void ApplyShader( struct Shader * shader, struct UniformMatch * m )
 {
 	glUseProgramObjectARB( shader->program );
+
+	while( m )
+	{
+		int place = glGetUniformLocationARB( shader->program, m->name );
+
+		if( m->intcount == 1 )
+		{
+			glUniform1i( place, m->data[0] );
+		}
+		else if( m->intcount == 2 )
+		{
+			glUniform2i( place, m->data[0], m->data[1] );
+		}
+		else if( m->intcount == 3 )
+		{
+			glUniform3i( place, m->data[0], m->data[1], m->data[2] );
+		}
+		else if( m->intcount == 4 )
+		{
+			glUniform4i( place, m->data[0], m->data[1], m->data[2], m->data[3] );
+		}
+		else if( m->floatcount == 1 )
+		{
+			glUniform1f( place, m->data[0] );
+		}
+		else if( m->floatcount == 2 )
+		{
+			glUniform2f( place, m->data[0], m->data[1] );
+		}
+		else if( m->floatcount == 3 )
+		{
+			glUniform3f( place, m->data[0], m->data[1], m->data[2] );
+		}
+		else if( m->floatcount == 4 )
+		{
+			glUniform4f( place, m->data[0], m->data[1], m->data[2], m->data[3] );
+		}
+
+		m = m->next;
+	}
+	//Need to bind things...
+}
+
+void CancelShader()
+{
+	glUseProgramObjectARB( 0 );
 }
 

@@ -20,4 +20,5 @@ def my_callback_function( conn, data, ids ):
         fields = CentGetDataFromCent_Float( data );
 
 server_handle = StartCentServer(b"0.0.0.0", 8553);
+gencallback = CENTCB(my_callback_function); #in global space to keep garbage collection from hitting it
 CentServerAddCB( server_handle, b"/*", CENTCB(my_callback_function), 44 );

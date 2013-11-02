@@ -4,7 +4,7 @@ all : $(OUTS)
 CFLAGS:=-Os -fPIC
 LDFLAGS:=-lpthread
 
-cent.so : cent.o os_generic.o chash.o
+cent.so : cent.o ../util/os_generic.o chash.o
 	gcc -shared -o $@ $^ $(LDFLAGS)
 
 servertest : servertest.o cent.so

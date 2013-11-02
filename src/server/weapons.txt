@@ -1,0 +1,20 @@
+# The interpreter of this file ignores any line that begins with '#', or any line that is empty.
+# A yaml weapons file will be introduced at some future time.
+# self.name = properties[0]
+# self.distance = properties[1]
+# self.loadCost = properties[2] Time in seconds that it takes to load/unload ammo without overclocking
+# self.ammoLimit = properties[3]
+# self.buildCost = properties[4] Time in seconds that it takes for a station to build an ammo
+# self.impactType = properties[5]
+# self.damage = properties[6]
+# self.blastRadius = properties[7]
+# self.thrust = properties[8]
+# self.turning = properties[9]
+# self.drag = properties[10]
+# self.pathing = properties[11]
+# self.energy = properties[12]
+# self.ammoGenerationWeight = properties[13]
+Nuke 2500 20 3 120 1 1000 600 1 1 .01 5 10 1
+Torpedo 1000 5 12 30 1 500 10 2 2.5 .01 1 2 4
+Mine 1200 8 6 45 3 600 200 1 1 .01 5 2 3
+EMP 2500 14 6 80 8 50 650 1 1 .01 5 4 2

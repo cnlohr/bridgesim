@@ -163,4 +163,8 @@ cancel:
 }
 
 
+void ApplyShader( struct Shader * shader )
+{
+	glUseProgramObjectARB( shader->program );
+}
 

@@ -3,6 +3,8 @@
 #include <GL/freeglut.h>
 #include "graphicscore.h"
 
+struct Shader * defshader;
+
 void reshape(int w, int h)
 {
 	glViewport(0, 0, w, h);
@@ -22,7 +24,8 @@ void display(void)
 	glColor3f( 1,0,1 );
 	glutBitmapString( GLUT_BITMAP_9_BY_15, "(15,51)" );
 
-/*
+ApplyShader( defshader );
+
   glBegin(GL_TRIANGLES);
     glColor3f(0.0, 0.0, 1.0);
     glVertex2i(0, 0);
@@ -31,7 +34,7 @@ void display(void)
     glColor3f(1.0, 0.0, 0.0);
     glVertex2i(20, 200);
   glEnd();
-*/
+
 	glFlush();
 }
 
@@ -44,6 +47,8 @@ int main(int argc, char **argv)
 		fprintf( stderr, "Error: GLEW Fault.\n" );
 		return 0;
 	}
+
+	defshader = CreateShader( "shaders/default" );
 
 	glutDisplayFunc( display );
 	glutReshapeFunc( reshape );

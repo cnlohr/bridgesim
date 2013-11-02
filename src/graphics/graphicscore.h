@@ -11,6 +11,7 @@ struct Shader
 };
 
 struct Shader * CreateShader( const char * file );
+void ApplyShader( struct Shader * shader );
 
 unsigned char * ReadDataFile( const char * name ); //Read a file and malloc
 

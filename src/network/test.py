@@ -30,7 +30,8 @@ def my_callback_function( conn, data, ids ):
 
 
 server_handle = StartCentServer(b"0.0.0.0", 8553);
-CentServerAddCB( server_handle, b"/*", CENTCB(my_callback_function), 44 );
+gencallback = CENTCB(my_callback_function); #Needs to be in global space to prevent garbage collection from hitting it.
+CentServerAddCB( server_handle, b"/*", gencallback, 44 );
 
 
 for x in range( 0, 100000 ):

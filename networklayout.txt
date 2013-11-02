@@ -1,0 +1,16 @@
+Network system loadout:
+
+s = strike craft
+u = unmanned thing (i.e. missile)
+c = corvette ship
+
+
+i.e.
+
+s0/pvr  [posx posy posz velx vely velz rotW rotX rotY rotZ (all floats)]
+s0/pwr  [power (energy) (float)]
+s0/name [ship human-readable name (string)]
+u0/mod  [ship model] (string)
+c3/hull [remaining hull]
+c3/bang [posx posy posz size] (positions in global) size in meters  (Causes appearance of explosion)
+

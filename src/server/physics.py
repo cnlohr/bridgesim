@@ -1,7 +1,5 @@
 import math
 
-print ("Math exists")
-
 DEBUG = True
 
 def VectorMultiply(scalar, vector):
@@ -72,8 +70,7 @@ def AngleVectorToQuaternion(angle, vector):
   quaternion = [math.cos(angle), math.sin(angle)*normvector[0], math.sin(angle)*normvector[1], math.sin(angle)*normvector[2]]
   return Normalize(quaternion)
 
-def OrientationQuaternion(location, target):
-  global referenceOrientation
+def OrientationQuaternion(location, target, referenceOrientation):
   reference = Normalize(referenceOrientation)
   facing = [0,0,0]
   for i in range(3):
@@ -121,9 +118,8 @@ def RotateQuaternionByQuaternion(apoint, bpoint):
   result = QuaternionMultiply(QuaternionMultiply(b, a), inverseb)
   return result
 
-def TurnTowards(rotationpoint, locationpoint, targetLocationpoint, turning):
-  global timeMultiplier
-  facing = OrientationVector(list(rotationpoint))
+def TurnTowards(rotationpoint, locationpoint, targetLocationpoint, turning, referenceOrientation, timeMultiplier):
+  facing = OrientationVector(list(rotationpoint), referenceOrientation)
   rotation = list(rotationpoint)
   location = list(locationpoint)
   targetLocation = list(targetLocationpoint)
@@ -154,8 +150,7 @@ def CheckRoll(quaternionpoint):
   roll  = atan2(2*q[2]*q[0] - 2*q[1]*q[3], 1 - 2*q[2]*q[2] - 2*q[3]*q[3])
   return roll
 
-def OrientationVector(quaternionpoint):
-  global referenceOrientation
+def OrientationVector(quaternionpoint, referenceOrientation):
   quaternion = list(quaternionpoint)
-  reference = Normalize([1,1,1])
+  reference = Normalize(referenceOrientation)
   return RotateVectorByQuaternion(reference, quaternion)

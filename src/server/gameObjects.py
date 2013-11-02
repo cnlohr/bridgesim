@@ -2,7 +2,6 @@ from physics import *
 import network
 from random import randint
 
-print ("GameObject Imports are ok")
 universe = None
 
 class Universe:
@@ -25,17 +24,40 @@ class Universe:
     
   def tick(self):
     for i in self.playerShips:
-      i.physics(self)
+      i.physics()
     for i in self.stations:
-      i.physics(self)
+      i.physics()
     for i in self.enemyGroups:
-      i.physics(self)
+      i.physics()
     for i in self.enemies:
-      i.physics(self)
+      i.physics()
     for i in self.missiles:
-      i.physics(self)
+      i.physics()
     for i in self.fighters:
-      i.physics(self)
+      i.physics()
+    
+  def state(self):
+    print "Player Ships:"
+    for i in self.playerShips:
+      print " "+i.name
+    print "Stations:"
+    for i in self.stations:
+      print " "+i.name
+    print "Ammo Types:"
+    for i in self.tubeAmmos:
+      print " "+i.name
+    print "Enemies:"
+    for i in self.enemies:
+      print " "+i.name
+    print "Enemy Groups:"
+    for i in self.enemyGroups:
+      print " "+str(i.ID)
+    print "Missiles:"
+    for i in self.missiles:
+      print " "+i.name
+    print "Fighters:"
+    for i in self.fighters:
+      print " "+i.name
     
 class TubeAmmo:
   name = "Uninitialized TubeAmmo"
@@ -104,7 +126,7 @@ class Station:
     self.producing = -1
     self.progress = 0
     self.loadingWeapon = 0
-  def physics(self, universe):
+  def physics(self):
     if self.hasDocked >= 0:
       supply(self)
     if self.shields > 200:
@@ -273,57 +295,51 @@ class playerMissile:
     self.damage = tubeAmmos[ammoID].damage
     self.blastRadius = tubeAmmos[ammoID].blastRadius
   def physics(self):
-    global timeMultiplier
-    global tubeAmmos
-    global enemies
     if self.pathing == 0: #0 indicates omnipotent homing - this should never miss.
-      self.rotation = OrientationQuaternion(self.location, enemies[self.target].location)
+      self.rotation = OrientationQuaternion(self.location, universe.enemies[self.target].location, universe.referenceOrientation)
       velocityMultiplier = 100
-      if Distance(self.location, enemies[self.target].location) < velocityMultiplier:
-        velocityMultiplier = Distance(self.location, enemies[self.target].location)
-      self.velocity = VectorMultiply(velocityMultiplier, OrientationVector(self.rotation))
-      self.location = VectorAdd(self.location, VectorMultiply(timeMultiplier, self.velocity))
+      if Distance(self.location, universe.enemies[self.target].location) < velocityMultiplier:
+        velocityMultiplier = Distance(self.location, universe.enemies[self.target].location)
+      self.velocity = VectorMultiply(velocityMultiplier, OrientationVector(self.rotation, universe.referenceOrientation))
+      self.location = VectorAdd(self.location, VectorMultiply(universe.timeMultiplier, self.velocity))
     if self.pathing == 1: #1 indicates linear homing (turn towards present target location)
-      self.rotation = TurnTowards(self.rotation, self.location, VectorAdd(self.location, VectorMultiply(-1, enemies[self.target].location)), self.turning)
-      self.velocity = VectorMultiply(velocityMultiplier, OrientationVector(self.rotation))
-      self.location = VectorAdd(self.location, VectorMultiply(timeMultiplier, self.velocity))
+      self.rotation = TurnTowards(self.rotation, self.location, VectorAdd(self.location, VectorMultiply(-1, universe.enemies[self.target].location)), self.turning, universe.referenceOrientation, universe.timeMultiplier)
+      self.velocity = VectorMultiply(velocityMultiplier, OrientationVector(self.rotation, universe.referenceOrientation))
+      self.location = VectorAdd(self.location, VectorMultiply(universe.timeMultiplier, self.velocity))
     if self.pathing == 2: #2 indicates second order homing (turn towards future target location)
-      self.rotation = TurnTowards(self.rotation, self.location, VectorAdd(self.location, VectorMultiply(-1, enemies[self.target].location)), self.turning)
-      self.velocity = VectorMultiply(velocityMultiplier, OrientationVector(self.rotation))
-      self.location = VectorAdd(self.location, VectorMultiply(timeMultiplier, self.velocity))
+      self.rotation = TurnTowards(self.rotation, self.location, VectorAdd(self.location, VectorMultiply(-1, universe.enemies[self.target].location)), self.turning, universe.referenceOrientation, universe.timeMultiplier)
+      self.velocity = VectorMultiply(velocityMultiplier, OrientationVector(self.rotation, universe.referenceOrientation))
+      self.location = VectorAdd(self.location, VectorMultiply(universe.timeMultiplier, self.velocity))
     if self.pathing == 3: #3 indicates unguided fire (move in a straight line)
-      self.velocity = VectorAdd(VectorMultiply(1-self.drag, self.velocity), VectorMultiply(self.thrust, OrientationVector(self.rotation)))
-      self.location = VectorAdd(self.location, VectorMultiply(timeMultiplier, self.velocity))
+      self.velocity = VectorAdd(VectorMultiply(1-self.drag, self.velocity), VectorMultiply(self.thrust, OrientationVector(self.rotation, universe.referenceOrientation)))
+      self.location = VectorAdd(self.location, VectorMultiply(universe.timeMultiplier, self.velocity))
     #if self.pathing == 4: #4 indicates target leading unguided fire (move in a straight line towards future target location)
     #if self.pathing == 5: #5 indicates an absolute destination (linear homing towards a specified location)
-    if Distance(self.location, enemies[self.target].location) < 5:
+    if Distance(self.location, universe.enemies[self.target].location) < 5:
       impact(self)
   def impact(self):
-    global enemies
-    global missiles
-    global playerShips
     if self.impactType == 0: # omnipotent impact: instantly kills its target.
-      enemies[self.target].explode(enemies[self.target])
-      del enemies[self.target]
+      universe.enemies[self.target].explode(enemies[self.target])
+      del universe.enemies[self.target]
     if self.impactType == 1: # explosive impact: damages every ship and missile within the blast radius, with damage reduced by distance.
-      for i in range(len(enemies)):
-        s = len(enemies) - i - 1
-        if Distance(self.location, enemies[s].location) < self.blastRadius:
-          enemies[s].health = enemies[s].health - self.damage * (1 - Distance(self.location, enemies[s].location)/self.blastRadius)
-          if enemies[s].health <= 0:
-            enemies[s].explode(enemies[s])
-            del enemies[s]
-      for i in range(len(missiles)):
-        s = len(missiles) - i - 1
-        if Distance(self.location, missiles[s].location) < self.blastRadius/2:
-          del missiles[s]
-      for i in range(len(playerShips)):
-        s = len(playerShips) - i - 1
-        if Distance(self.location, playerShips[s].location) < self.blastRadius:
-          playerShips[s].health = playerShips[s].health - self.damage * (1 - Distance(self.location, playerShips[s].location)/self.blastRadius)
-          if playerShips[s].health <= 0:
-            playerShips[s].explode(playerShips[s])
-            del playerShips[s]
+      for i in range(len(universe.enemies)):
+        s = len(universe.enemies) - i - 1
+        if Distance(self.location, universe.enemies[s].location) < self.blastRadius:
+          universe.enemies[s].health = universe.enemies[s].health - self.damage * (1 - Distance(self.location, universe.enemies[s].location)/self.blastRadius)
+          if universe.enemies[s].health <= 0:
+            universe.enemies[s].explode(enemies[s])
+            del universe.enemies[s]
+      for i in range(len(universe.missiles)):
+        s = len(universe.missiles) - i - 1
+        if Distance(self.location, universe.missiles[s].location) < self.blastRadius/2:
+          del universe.missiles[s]
+      for i in range(len(universe.playerShips)):
+        s = len(universe.playerShips) - i - 1
+        if Distance(self.location, universe.playerShips[s].location) < self.blastRadius:
+          universe.playerShips[s].health = universe.playerShips[s].health - self.damage * (1 - Distance(self.location, universe.playerShips[s].location)/self.blastRadius)
+          if universe.playerShips[s].health <= 0:
+            universe.playerShips[s].explode(universe.playerShips[s])
+            del universe.playerShips[s]
     #if self.impactType == 2: # single target impact: damages the target ship, but nothing else.
     #if self.impactType == 3: # mine deployment: creates a mine object that will explode if a ship gets near enough to it.
     #if self.impactType == 4: # bait deployment: creates a fake station that will lure close enemies. Very minimal health.
@@ -369,20 +385,20 @@ class PlayerShip:
     self.scanningProgress = [0] * len(universe.enemies)
     self.shipID = initID
     self.name = initName
-  def physics(self, universe):
+  def physics(self):
     global timeMultiplier
     #TODO get player input here
     if self.turning != [0,0,0,0]:
       self.rotation = QuaternionMult(self.turning, self.rotation)
     elif self.orientationTarget != [0,0,0,0]:
-      self.rotation = TurnTowards(self.rotation, self.location, OrientationVector(self.orientationTarget), self.turning)
-    self.velocity = VectorAdd(VectorMultiply((1 - self.drag), self.velocity), VectorMultiply(universe.timeMultiplier * self.accelerating * self.thrust * self.power[5], OrientationVector(self.rotation)))
+      self.rotation = TurnTowards(self.rotation, self.location, OrientationVector(self.orientationTarget), self.turning, universe.referenceOrientation, universe.timeMultiplier)
+    self.velocity = VectorAdd(VectorMultiply((1 - self.drag), self.velocity), VectorMultiply(universe.timeMultiplier * self.accelerating * self.thrust * self.power[5], OrientationVector(self.rotation, universe.referenceOrientation)))
     self.location = VectorAdd(self.location, VectorMultiply(universe.timeMultiplier, self.velocity))
     #TODO handle firing missiles, beams
   def fire(self, tubeID):
     self.tubes[tubeID].fire(self.targetingID)
   def damage(self, damage, sourceType, source, location, frequency):
-    angle = Angle(OrientationVector(OrientationQuaternion(self.location, location)), OrientationVector(self.rotation))
+    angle = Angle(OrientationVector(OrientationQuaternion(self.location, location, universe.referenceOrientation)), OrientationVector(self.rotation))
     shieldHit = 0
     if angle >= math.pi/2: #Front Shields hit
       shieldHit = 0
@@ -403,60 +419,50 @@ class PlayerShip:
       #explode here
       print(self.name + "was killed by" + source + "using" + sourceType)
 
-class enemyGroup:
-  global enemyGroups
+class EnemyGroup:
   ID = "Uninitialized ID"
   location = [0,0,0]
   rotation = [0,0,0,0]
   velocity = [0,0,0]
   target = -1
   targetLocation = [0,0,0]
-  def __init__(self, idnumber):
-    global difficulty
-    global stations
-    global enemies
+  def __init__(self, idnumber, universe):
     self.ID = idnumber
     self.location = [((-1)**randint(1,2))*randint(10000,50000),((-1)**randint(1,2))*randint(10000,50000),0]
     min = 0
-    dist = [0] * len(stations)
-    for i in range(len(stations)):
-      dist[i] = Distance(self.location, stations[i].location)
+    dist = [0] * len(universe.stations)
+    for i in range(len(universe.stations)):
+      dist[i] = Distance(self.location, universe.stations[i].location)
       if dist[i] < dist[min]:
         min = i
-    self.rotation = OrientationQuaternion(self.location, stations[min].location)
-    self.velocity = 100*Normalize(OrientationVector(self.rotation))
-    self.targetLocation = stations[min].location
-    for i in range(difficulty):
+    self.rotation = OrientationQuaternion(self.location, universe.stations[min].location, universe.referenceOrientation)
+    self.velocity = 100*Normalize(OrientationVector(self.rotation, universe.referenceOrientation))
+    self.targetLocation = universe.stations[min].location
+    for i in range(universe.difficulty):
       name = "A" + str(0) + str(i)
       shipType = "Generic Ship Type"
       s = enemyShip(self.location, self.rotation, self.velocity, name, self.ID, shipType)
-      enemies.append(s)
+      universe.enemies.append(s)
   def physics(self):
-    global stations
-    global playerShips
-    global enemies
     if self.target > -1:
-      if Distance(playerShips[self.target], self.location) > 5000:
+      if Distance(universe.playerShips[self.target], self.location) > 5000:
         self.target = -1
     if self.target == -1:
-      for i in range(len(playerShips)):
-          if Distance(self.location, playerShips[i].location) < 3000:
+      for i in range(len(universe.playerShips)):
+          if Distance(self.location, universe.playerShips[i].location) < 3000:
             self.target = i
     if self.target == -1:
-      dist = [0] * len(stations)
+      dist = [0] * len(universe.stations)
       min = 0
-      for i in range(len(stations)):
-        dist[i] = Distance(self.location, stations[i].location)
+      for i in range(len(universe.stations)):
+        dist[i] = Distance(self.location, universe.stations[i].location)
         if dist[i] < dist[min]:
           min = i
-      self.targetLocation = list(stations[min].location)
-      self.rotation = OrientationQuaternion(self.location, stations[min].location)
-      self.velocity = 100*Normalize(OrientationVector(self.rotation))
+      self.targetLocation = list(universe.stations[min].location)
+      self.rotation = OrientationQuaternion(self.location, universe.stations[min].location, universe.referenceOrientation)
+      self.velocity = 100*Normalize(OrientationVector(self.rotation, universe.referenceOrientation))
 
 class enemyShip():
-  global playerShips
-  global stations
-  global enemyGroups
   location = [0,0,0]
   rotation = [0,0,0,0]
   velocity = [0,0,0]
@@ -485,27 +491,24 @@ class enemyShip():
     self.groupID = groupID
     self.shipType = shipType
   def physics(self):
-    global timeMultiplier
-    global enemyGroups
-    global playerShips
-    self.target = enemyGroups[self.groupID].target
+    self.target = universe.enemyGroups[self.groupID].target
     if self.target == -1:
-      self.targetLocation = list(enemyGroups[self.groupID].targetLocation)
+      self.targetLocation = list(universe.enemyGroups[self.groupID].targetLocation)
     else:
-      self.targetLocation = list(playerShips[self.target].location)
+      self.targetLocation = list(universe.playerShips[self.target].location)
     if Distance(self.location, self.targetLocation) > 2*Magnitude(self.velocity)/self.drag + 50:
-      self.rotation = TurnTowards(self.rotation, self.location, self.targetLocation, self.turning)
-      self.velocity = VectorAdd(VectorMultiply((1 - self.drag), self.velocity), VectorMultiply(timeMultiplier * self.thrust, OrientationVector(self.rotation)))
-      self.location = VectorAdd(self.location, VectorMultiply(timeMultiplier, self.velocity))
+      self.rotation = TurnTowards(self.rotation, self.location, self.targetLocation, self.turning, universe.referenceOrientation, universe.timeMultiplier)
+      self.velocity = VectorAdd(VectorMultiply((1 - self.drag), self.velocity), VectorMultiply(universe.timeMultiplier * self.thrust, OrientationVector(self.rotation, universe.referenceOrientation)))
+      self.location = VectorAdd(self.location, VectorMultiply(universe.timeMultiplier, self.velocity))
     else:
-      self.rotation = TurnTowards(self.rotation, self.location, self.targetLocation, self.turning)
+      self.rotation = TurnTowards(self.rotation, self.location, self.targetLocation, self.turning, universe.referenceOrientation, universe.timeMultiplier)
       self.velocity = VectorMultiply(1-self.drag, self.velocity)
-      self.location = VectorAdd(self.location, VectorMultiply(timeMultiplier, self.velocity))
+      self.location = VectorAdd(self.location, VectorMultiply(universe.timeMultiplier, self.velocity))
     #TODO put some firing here.
     network.update("ene", self.name, network.data("loc", self.location))
 
   def damage(self, damage, sourceType, source, location, frequency):
-    angle = Angle(OrientationVector(OrientationQuaternion(self.location, location)), OrientationVector(self.rotation))
+    angle = Angle(OrientationVector(OrientationQuaternion(self.location, location), universe.referenceOrientation), OrientationVector(self.rotation))
     shieldHit = 0
     if angle >= math.pi/2: #Front Shields hit
       shieldHit = 0

@@ -1,24 +1,17 @@
 #!/usr/bin/python
-print ("Basic stuff is good")
 import gameObjects
-print ("GameObjects is OK.")
-import ConfigParser
-      
-print ("Imports are successfull.")
-      
+import configparser
+
 universe = gameObjects.Universe(TPS=30, difficulty=5)
 gameObjects.universe = universe
       
-if universe:
-  print ("Universe is ok...")
-
 def initStations(count):
   for i in xrange(count):
     station = gameObjects.Station(i, universe)
     universe.stations.append(station)
 
 def initWeapons():
-  config = ConfigParser.RawConfigParser()
+  config = configparser.RawConfigParser()
   config.read('weapons.conf')
   weapons = config.sections()
   for i in weapons:
@@ -36,14 +29,13 @@ def initPlayers(count):
   for i in xrange(count):
     universe.playerShips.append(gameObjects.PlayerShip(i, "Fartemis", universe))
     
-print ("Start")
 initWeapons()
-print ("Weapons Check")
 initStations(4)
-print ("Stations Check")
 initPlayers(1)
-print ("Players Check")
+initEnemyGroups(3)
+
+print(universe.state())
 
 while True:
-  print ("Tick")
   universe.tick()
+  print universe.enemies[1].location

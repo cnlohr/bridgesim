@@ -1,64 +1,49 @@
-import time
-import math
-from random import randint
+#!/usr/bin/python
+print ("Basic stuff is good")
 import gameObjects
+print ("GameObjects is OK.")
 import ConfigParser
-
-playerShips = []
-stations = []
-tubeAmmos = []
-enemies = []
-enemyGroups = []
-missiles = []
-enemyMissiles = []
-fighters = []
-referenceOrientation = [1,1,1] #this should be arbitrary; but changing it is useful for testing purposes sometimes.
-TPS = 30
-timeMultiplier = 1/TPS
-difficulty = 5
-
-def Tick(input):
-  for i in xrange(input):
-    for i in playerShips:
-      i.physics()
-    for i in stations:
-      i.physics()
-    for i in enemyGroups:
-      i.physics()
-    for i in enemies:
-      i.physics()
-    for i in missiles:
-      i.physics()
-    for i in fighters:
-      i.physics()
       
-def initStations(a):
-  for i in xrange(a):
-    s = gameObjects.Station()
-    s.init(i)
-    stations.append(s)
+print ("Imports are successfull.")
+      
+universe = gameObjects.Universe(TPS=30, difficulty=5)
+gameObjects.universe = universe
+      
+if universe:
+  print ("Universe is ok...")
+
+def initStations(count):
+  for i in xrange(count):
+    station = gameObjects.Station(i, universe)
+    universe.stations.append(station)
 
 def initWeapons():
   config = ConfigParser.RawConfigParser()
   config.read('weapons.conf')
   weapons = config.sections()
   for i in weapons:
-    s = gameObjects.TubeAmmo()
-    s.init(dict(config.items(i)))
-    tubeAmmos.append(s)
+    tubeAmmoInfo = dict(config.items(i))
+    tubeAmmoInfo['name'] = i
+    tubeAmmo = gameObjects.TubeAmmo(tubeAmmoInfo)
+    universe.tubeAmmos.append(tubeAmmo)
 
-def initEnemyGroups(a):
-  for i in xrange(a):
-    s = gameObjects.enemyGroup()
-    s.init(i)
-    enemyGroups.append(s)
-
-def init():
-  initWeapons()
-  initStations(4)
-  spawnGroups(5)
-  initPlayers()
-
-initStations(4)
+def initEnemyGroups(count):
+  for i in xrange(count):
+    enemyGroup = gameObjects.EnemyGroup(i, universe)
+    universe.enemyGroups.append(enemyGroup)
+    
+def initPlayers(count):
+  for i in xrange(count):
+    universe.playerShips.append(gameObjects.PlayerShip(i, "Fartemis", universe))
+    
+print ("Start")
 initWeapons()
-initEnemyGroups(2)
+print ("Weapons Check")
+initStations(4)
+print ("Stations Check")
+initPlayers(1)
+print ("Players Check")
+
+while True:
+  print ("Tick")
+  universe.tick()

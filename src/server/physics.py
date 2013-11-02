@@ -1,3 +1,9 @@
+import math
+
+print ("Math exists")
+
+DEBUG = True
+
 def VectorMultiply(scalar, vector):
   result = [0] * len(vector)
   for i in range(len(vector)):
@@ -16,15 +22,17 @@ def Dot(a,b): #Dot returns the dot product of two vectors. The vectors must be o
     for i in range(len(a)):
       c = c + a[i] * b[i]
     return c
-  print("Dot was given vectors of diffrent lengths. a:", a, "b:", b, "Returning 0.")
-  return 0
+  if DEBUG:
+    print("Dot was given vectors of diffrent lengths. a:", a, "b:", b, "Returning 0.")
+    return 0
 
 def Cross(a,b): #Cross returns the cross product of 2 vectors of length 3, or a zero vector if the vectors are not both length 3.
   if len(a) == 3 & len(b) == 3:
     c = [a[1]*b[2] - a[2]*b[1], a[2]*b[0] - a[0]*b[2], a[0]*b[1] - a[1]*b[0]]
     return c
-  print("Cross was given a vector whose length is not 3. a:", a, "b:", b, "Returning a zero vector.")
-  return [0,0,0]
+  if DEBUG:
+    print("Cross was given a vector whose length is not 3. a:", a, "b:", b, "Returning a zero vector.")
+    return [0,0,0]
 
 def Normalize(a): #Normalize returns a normalized vector, unless it is given a zero vector, in which case it returns the zero vector, and complains.
   s = 0
@@ -33,8 +41,10 @@ def Normalize(a): #Normalize returns a normalized vector, unless it is given a z
     s = s + a[i]**2
   s = math.sqrt(s)
   if s == 0:
-    print("Normalize was given a zero vector. This is not necessarily an error; returning zero vector.")
-    return c
+    if DEBUG:
+      print("Normalize was given a zero vector. This is not necessarily an error; returning zero vector.")
+      return c
+    return
   for i in range(len(a)):
     c[i] = a[i]/s
   return c
@@ -49,8 +59,9 @@ def Distance(a, b): #Distance returns the distance between two vectors of length
   if len(a) == 3 & len(b) == 3:
     c = (a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2
     return math.sqrt(c)
-  print("Distance was given vectors whose lengths are not both 3. a:", a, "b:", b, "Returning 0.")
-  return 0
+  if DEBUG:
+    print("Distance was given vectors whose lengths are not both 3. a:", a, "b:", b, "Returning 0.")
+    return 0
 
 def Angle(a,b):
   return math.acos(Dot(a,b)/(Magnitude(a)*Magnitude(b)))
@@ -88,8 +99,9 @@ def QuaternionMultiply(apoint, bpoint):
     result[2] = a[0]*b[2] + a[2]*b[0] + a[3]*b[1] - a[1]*b[3]
     result[3] = a[0]*b[3] + a[3]*b[0] + a[1]*b[2] - a[2]*b[1]
     return result
-  print("QuaternionMultiply was given lists of the wrong length. Returning identity quaternion.", a, b)
-  return [1,0,0,0]
+  if DEBUG:
+    print("QuaternionMultiply was given lists of the wrong length. Returning identity quaternion.", a, b)
+    return [1,0,0,0]
 
 def RotateVectorByQuaternion(vectorpoint, quaternionpoint):
   vector = list(vectorpoint)
@@ -98,7 +110,8 @@ def RotateVectorByQuaternion(vectorpoint, quaternionpoint):
   result = QuaternionMultiply(QuaternionMultiply(quaternion, vector), inversequaternion)
   vectorresult = [result[1], result[2], result[3]]
   if math.fabs(result[0]) > 10 ** (-15):
-    print("RotateVectorByQuaternion gave a non-zero real result for", vector, quaternion)
+    if DEBUG:
+      print("RotateVectorByQuaternion gave a non-zero real result for", vector, quaternion)
   return vectorresult
 
 def RotateQuaternionByQuaternion(apoint, bpoint):
@@ -144,5 +157,5 @@ def CheckRoll(quaternionpoint):
 def OrientationVector(quaternionpoint):
   global referenceOrientation
   quaternion = list(quaternionpoint)
-  reference = Normalize(referenceOrientation)
+  reference = Normalize([1,1,1])
   return RotateVectorByQuaternion(reference, quaternion)

@@ -1,6 +1,42 @@
-import physics
+from physics import *
 import network
+from random import randint
 
+print ("GameObject Imports are ok")
+universe = None
+
+class Universe:
+  playerShips = []
+  stations = []
+  tubeAmmos = []
+  enemies = []
+  enemyGroups = []
+  missiles = []
+  enemyMissiles = []
+  fighters = []
+  referenceOrientation = [1,1,1] #this should be arbitrary; but changing it is useful for testing purposes sometimes.
+  TPS = 30
+  timeMultiplier = 1/TPS
+  difficulty = 0
+  
+  def __init__(self, TPS=30, difficulty=5):
+    self.TPS = TPS
+    self.difficulty = difficulty
+    
+  def tick(self):
+    for i in self.playerShips:
+      i.physics(self)
+    for i in self.stations:
+      i.physics(self)
+    for i in self.enemyGroups:
+      i.physics(self)
+    for i in self.enemies:
+      i.physics(self)
+    for i in self.missiles:
+      i.physics(self)
+    for i in self.fighters:
+      i.physics(self)
+    
 class TubeAmmo:
   name = "Uninitialized TubeAmmo"
   distance = 0
@@ -16,21 +52,21 @@ class TubeAmmo:
   pathing = 0
   energy = 0
   ammoGenerationWeight = 0
-  def init(self, config):
+  def __init__(self, config):
     self.name = config['name']
     self.distance = float(config['distance'])
-    self.loadCost = float(config['loadCost'])
-    self.ammoLimit = float(config['ammoLimit'])
-    self.buildCost = float(config['buildCost'])
-    self.impactType = float(config['impactType'])
+    self.loadCost = float(config['loadcost'])
+    self.ammoLimit = float(config['ammolimit'])
+    self.buildCost = float(config['buildcost'])
+    self.impactType = float(config['impacttype'])
     self.damage = float(config['damage'])
-    self.blastRadius = float(config['blastRadius'])
+    self.blastRadius = float(config['blastradius'])
     self.thrust = float(config['thrust'])
     self.turning = float(config['turning'])
     self.drag = float(config['drag'])
     self.pathing = float(config['pathing'])
     self.energy = float(config['energy'])
-    self.ammoGenerationWeight = float(config['ammoGenerationWeight'])
+    self.ammoGenerationWeight = float(config['ammogenerationweight'])
 
 class Station:
   location = [0,0,0]
@@ -50,7 +86,7 @@ class Station:
   producing = 0
   progress = 0
   loadingWeapon = 0
-  def init(self, i):
+  def __init__(self, i, universe):
     self.location = [(-1)**randint(1,2) * randint(500,5000),(-1)**randint(1,2) * randint(500,5000),0]
     self.rotation = [0,0,0,0]
     self.velocity = [0,0,0]
@@ -68,12 +104,7 @@ class Station:
     self.producing = -1
     self.progress = 0
     self.loadingWeapon = 0
-  def physics(self):
-    global TPS
-    global timeMultiplier
-    global weapons
-    global playerShips
-    global tubeAmmos
+  def physics(self, universe):
     if self.hasDocked >= 0:
       supply(self)
     if self.shields > 200:
@@ -83,18 +114,18 @@ class Station:
           if self.stock[i]/self.production[i] < self.stock[min]/self.production[min]:
             min = i
         self.producing = min
-        self.progress = TPS * tubeAmmos[self.producing].buildCost
+        self.progress = universe.TPS * universe.tubeAmmos[self.producing].buildCost
       else:
         self.progress = self.progress - 1
-      self.energy = self.energy + 2 * timeMultiplier
+      self.energy = self.energy + 2 * universe.timeMultiplier
       if self.progress == 0:
         self.stock[self.producing] = self.stock[self.producing] + 1
         self.producing = -1
     else:
-      self.shields = self.shields + .03 * timeMultiplier
+      self.shields = self.shields + .03 * universe.timeMultiplier
     if self.shields < 500:
-      self.shields = self.shields + .1 * timeMultiplier
-      self.energy = self.energy - 6 * timeMultiplier
+      self.shields = self.shields + .1 * universe.timeMultiplier
+      self.energy = self.energy - 6 * universe.timeMultiplier
     if self.progress == 0:
       self.stock[self.producing] = self.stock[self.producing] + 1
       min = 0
@@ -102,10 +133,9 @@ class Station:
         if self.stock[i]/self.production[i] < self.stock[min]/self.production[min]:
           min = i
       self.producing = min
-      self.progress = TPS * tubeAmmos[self.producing].buildCost
-    floats = c_float * 3
-    myvar = floats(self.location[:])
-    ChangeValue( server_handle, CreateCent( b"/e/sta/"+self.name+"/loc", 0x80, 1, 12, myvar ), 1 );
+      self.progress = universe.TPS * universe.tubeAmmos[self.producing].buildCost
+    network.update("sta", self.name, network.data("loc", self.location))
+
   def dock(self, playerShip):
     if self.canDock == 1:
       self.canDock = -1
@@ -115,8 +145,6 @@ class Station:
       self.hasDocked = -1
       self.canDock = 1
   def supply(self):
-    global timeMultiplier
-    global TPS
     if playerShips[self.hasDocked].energy < 1000:
       playerShips[self.hasDocked].energy = playerShips[self.hasDocked].energy + 30 * timeMultiplier
     if playerShips[self.hasDocked].energy > 1000:
@@ -153,7 +181,7 @@ class Tube:
   location = [0,0,0]
   velocity = [0,0,0]
   playerID = -1
-  def init(self, location, velocity, playerID):
+  def __init__(self, location, velocity, playerID):
     self.location = list(location)
     self.velocity = list(velocity)
     self.playerID = playerID
@@ -181,9 +209,8 @@ class Tube:
   def fire(self, target):
     global playerShips
     global missiles
-    s = playerMissile()
+    s = playerMissile(self.ammoType, target, self.playerID, self.location, self.rotation, self.velocity)
     #TODO add the tube loc,vel,rot to the player loc,vel,rot in a sensible way
-    s.init(self.ammoType, target, self.playerID, self.location, self.rotation, self.velocity)
     missiles.append(s)
     
 class Beam:
@@ -195,7 +222,7 @@ class Beam:
   antimissile = -1
   loadingCost = 0
   playerID = -1
-  def init(self, playerID, damage, distance, spread, facing, antimissile, loadTime):
+  def __init__(self, playerID, damage, distance, spread, facing, antimissile, loadTime):
     global TPS
     self.playerID = playerID
     self.damage = damage
@@ -226,7 +253,7 @@ class playerMissile:
   damage = 0
   blastRadius = 0
   target = -1
-  def init(self, ammoID, enemyID, playerID, location, rotation, velocity):
+  def __init__(self, ammoID, enemyID, playerID, location, rotation, velocity):
     global tubeAmmos
     global enemies
     global playerShips
@@ -307,7 +334,6 @@ class playerMissile:
     #TODO primitive collision detection.
     
 class PlayerShip:
-  global enemies
   location = [0,0,0]
   rotation = [1,0,0,0]
   velocity = [0,0,0]
@@ -336,21 +362,22 @@ class PlayerShip:
   targetingType = -1
   targetingID = 0
   scanningID = -1
-  scanningProgress = [0] * len(enemies) #TODO use a dictionary for this.
+  scanningProgress = [0] #TODO use a dictionary for this.
   ammunition = [2,8,4,4]
   ammunitionMax = [3,12,6,6]
-  def init(self, initID, initName):
+  def __init__(self, initID, initName, universe):
+    self.scanningProgress = [0] * len(universe.enemies)
     self.shipID = initID
     self.name = initName
-  def physics(self):
+  def physics(self, universe):
     global timeMultiplier
     #TODO get player input here
     if self.turning != [0,0,0,0]:
       self.rotation = QuaternionMult(self.turning, self.rotation)
     elif self.orientationTarget != [0,0,0,0]:
       self.rotation = TurnTowards(self.rotation, self.location, OrientationVector(self.orientationTarget), self.turning)
-    self.velocity = VectorAdd(VectorMultiply((1 - self.drag), self.velocity), VectorMultiply(timeMultiplier * self.accelerating * self.thrust * self.power[5], OrientationVector(self.rotation)))
-    self.location = VectorAdd(self.location, VectorMultiply(timeMultiplier, self.velocity))
+    self.velocity = VectorAdd(VectorMultiply((1 - self.drag), self.velocity), VectorMultiply(universe.timeMultiplier * self.accelerating * self.thrust * self.power[5], OrientationVector(self.rotation)))
+    self.location = VectorAdd(self.location, VectorMultiply(universe.timeMultiplier, self.velocity))
     #TODO handle firing missiles, beams
   def fire(self, tubeID):
     self.tubes[tubeID].fire(self.targetingID)
@@ -384,7 +411,7 @@ class enemyGroup:
   velocity = [0,0,0]
   target = -1
   targetLocation = [0,0,0]
-  def init(self, idnumber):
+  def __init__(self, idnumber):
     global difficulty
     global stations
     global enemies
@@ -402,8 +429,7 @@ class enemyGroup:
     for i in range(difficulty):
       name = "A" + str(0) + str(i)
       shipType = "Generic Ship Type"
-      s = enemyShip()
-      s.init(self.location, self.rotation, self.velocity, name, self.ID, shipType)
+      s = enemyShip(self.location, self.rotation, self.velocity, name, self.ID, shipType)
       enemies.append(s)
   def physics(self):
     global stations
@@ -449,7 +475,7 @@ class enemyShip():
   health = 600
   target = -1
   targetLocation = [0,0,0]
-  def init(self, location, rotation, velocity, name, groupID, shipType):
+  def __init__(self, location, rotation, velocity, name, groupID, shipType):
     self.location = list(location)
     for i in range(len(self.location)):
       self.location[i] = self.location[i] + randint(-50, 50)
@@ -476,9 +502,8 @@ class enemyShip():
       self.velocity = VectorMultiply(1-self.drag, self.velocity)
       self.location = VectorAdd(self.location, VectorMultiply(timeMultiplier, self.velocity))
     #TODO put some firing here.
-    floats = c_float * 3
-    myvar = floats(self.location[:])
-    ChangeValue( server_handle, CreateCent( b"/e/ene/"+self.name+"/loc", 0x80, 1, 12, myvar ), 1 );
+    network.update("ene", self.name, network.data("loc", self.location))
+
   def damage(self, damage, sourceType, source, location, frequency):
     angle = Angle(OrientationVector(OrientationQuaternion(self.location, location)), OrientationVector(self.rotation))
     shieldHit = 0

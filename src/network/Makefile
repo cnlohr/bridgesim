@@ -1,8 +1,8 @@
 OUTS := servertest clientonly
 all : $(OUTS)
 
-CFLAGS:=-Os -fPIC -I../util
-LDFLAGS:=-lpthread
+CFLAGS:=-O0 -g -fPIC -I../util
+LDFLAGS:=-lpthread -O0 -g
 
 cent.so : cent.o ../util/os_generic.o chash.o
 	gcc -shared -o $@ $^ $(LDFLAGS)

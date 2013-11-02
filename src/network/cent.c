@@ -411,6 +411,7 @@ struct CentServer * StartCentServer( const char * addy, int port )
 	}
 
 	ret = malloc( sizeof( struct CentServer ) );
+	memset( ret, 0, sizeof( struct CentServer ) );
 	ret->port = port;
 	ret->socket = sock;
 	ret->addy = addy;
@@ -461,6 +462,7 @@ struct CentConnection * CentConnect( const char * addy, int port )
 	}
 
 	nc = malloc( sizeof( struct CentConnection ) );
+	memset( nc, 0, sizeof( struct CentConnection ) );
 	nc->socket = sock;
 	nc->event_tail = 0;
 	nc->connectedA = 1;

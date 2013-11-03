@@ -41,12 +41,12 @@ def initPlayers(count):
 initWeapons()
 initStations(40)
 initPlayers(1)
-initEnemyGroups(300)
+initEnemyGroups(1)
 
-#print(universe.state())
 try:
   while True:
     universe.tick()
+    print (universe.enemies[1].location)
 except:
   gameObjects.shutdown()
   print (traceback.format_exc())

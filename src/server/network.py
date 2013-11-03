@@ -28,7 +28,7 @@ CentServerAddCB( server_handle, b"/*", CENTCB(my_callback_function), 44 );
 
 # This is used to send a packet to the clients to update entity information
 def update(entityType, name, data):
-  ChangeValue( server_handle, CreateCent( b"/e/"+entityType+"/"+name+"/"+data.string() ), 1 );
+  ChangeValue( server_handle, CreateCent( bytes(b"/e/"+bytes(entityType, 'ascii')+b"/"+bytes(name, 'ascii')+b"/")+data.string() ), 1 );
   
 # This is used to convert python datatypes to the network types we use
 class data:
@@ -38,7 +38,7 @@ class data:
   def string(self):
     if self.dataType == "loc":  
       floats = ctypes.c_float * 3
-      return bytes("loc")+bytes(0x80)+bytes(1)+bytes(12)+bytes(floats(*self.contents))
+      return b"loc"+bytes(0x80)+bytes(1)+bytes(12)+bytes(floats(*self.contents))
 
       
     

@@ -5,6 +5,11 @@ try:
 except ImportError:
   import configparser as ConfigParser
 
+try:
+  xrange(1)
+except NameError:
+  xrange = range
+
 universe = gameObjects.Universe(TPS=30, difficulty=5)
 gameObjects.universe = universe
       
@@ -41,4 +46,4 @@ print(universe.state())
 
 while True:
   universe.tick()
-  print universe.enemies[1].location
+  print (universe.enemies[1].location)

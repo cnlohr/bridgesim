@@ -128,7 +128,8 @@ void * ServerWorkerThreadSend( void * v )
 
 				OGLockSema( p->valuesema );
 				struct chashlist * pl = HashProduceSortedTable( p->AllValues );
-				OGUnlockSema( p->valuesema );
+
+				//XXX WARN: This is slow and bad because the semaphore is around too much.
 
 				for( i = 0; i < pl->length; i++ )
 				{
@@ -166,7 +167,8 @@ void * ServerWorkerThreadSend( void * v )
 					*oldval = newval->lastChange;
 
 					//Nope!  New change.  Send it.
-			
+					for( i = 0; i < 20; i++ ) printf( "%02x ", buffer[i+place] ) ;
+					printf( "\n" );
 					int rs = TackCentItem( newval, &buffer[place], MAX_OUT_BUFFER-place-1 );
 
 					if( rs < 0 ) //out of room?
@@ -177,6 +179,7 @@ void * ServerWorkerThreadSend( void * v )
 						}
 						else
 						{
+							OGUnlockSema( p->valuesema );
 							goto go_and_send;  //Out of room, just go send and we'll get this one next time 'round.
 						}
 					}
@@ -185,6 +188,7 @@ void * ServerWorkerThreadSend( void * v )
 				}
 				free( pl );
 			}
+			OGUnlockSema( p->valuesema );
 		}
 		else
 		{

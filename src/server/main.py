@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import gameObjects
+import timeit
 try:
   import ConfigParser
 except ImportError:
@@ -38,12 +39,13 @@ def initPlayers(count):
     universe.playerShips.append(gameObjects.PlayerShip(i, "Fartemis", universe))
     
 initWeapons()
-initStations(4)
+initStations(40)
 initPlayers(1)
-initEnemyGroups(3)
+initEnemyGroups(300)
 
 #print(universe.state())
 
 while True:
-  universe.tick()
+  rate = 10/timeit.timeit(universe.tick, number=10)
+  print ("Frame Rate: %f" % rate)
  # print (universe.enemies[1].location)

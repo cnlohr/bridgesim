@@ -1,5 +1,5 @@
 from physics import *
-import network as network
+import pyNetwork as network
 from random import randint
 
 universe = None
@@ -439,7 +439,7 @@ class EnemyGroup:
     self.velocity = 100*Normalize(OrientationVector(self.rotation, universe.referenceOrientation))
     self.targetLocation = universe.stations[min].location
     for i in range(universe.difficulty):
-      name = "A" + str(0) + str(i)
+      name = chr(int(self.ID%26+ord("A")))+ chr(int(self.ID/26)+ord("A")) + str(i).zfill(2)
       shipType = "Generic Ship Type"
       s = enemyShip(self.location, self.rotation, self.velocity, name, self.ID, shipType)
       universe.enemies.append(s)

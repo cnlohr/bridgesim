@@ -18,7 +18,7 @@ class Universe:
   fighters = []
   referenceOrientation = [1,1,1] #this should be arbitrary; but changing it is useful for testing purposes sometimes.
   TPS = 30
-  timeMultiplier = 1/TPS
+  timeMultiplier = 1./TPS
   difficulty = 0
   
   def __init__(self, TPS=30, difficulty=5):
@@ -151,7 +151,8 @@ class Station:
     if self.shields < 500:
       self.shields = self.shields + .1 * universe.timeMultiplier
       self.energy = self.energy - 6 * universe.timeMultiplier
-    if self.progress == 0:
+    if self.progress == 0:      updates.extend(i.tick(duration))
+
       self.stock[self.producing] = self.stock[self.producing] + 1
       min = 0
       for i in range(len(self.stock)):

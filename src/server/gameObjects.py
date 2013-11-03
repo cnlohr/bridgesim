@@ -37,27 +37,27 @@ class Universe:
       i.physics()
     
   def state(self):
-    print "Player Ships:"
+    print ("Player Ships:")
     for i in self.playerShips:
-      print " "+i.name
-    print "Stations:"
+      print (" "+i.name)
+    print ("Stations:")
     for i in self.stations:
-      print " "+i.name
-    print "Ammo Types:"
+      print (" "+i.name)
+    print ("Ammo Types:")
     for i in self.tubeAmmos:
-      print " "+i.name
-    print "Enemies:"
+      print (" "+i.name)
+    print ("Enemies:")
     for i in self.enemies:
-      print " "+i.name
-    print "Enemy Groups:"
+      print (" "+i.name)
+    print ("Enemy Groups:")
     for i in self.enemyGroups:
-      print " "+str(i.ID)
-    print "Missiles:"
+      print (" "+str(i.ID))
+    print ("Missiles:")
     for i in self.missiles:
-      print " "+i.name
-    print "Fighters:"
+      print (" "+i.name)
+    print ("Fighters:")
     for i in self.fighters:
-      print " "+i.name
+      print (" "+i.name)
     
 class TubeAmmo:
   name = "Uninitialized TubeAmmo"

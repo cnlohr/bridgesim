@@ -1,6 +1,6 @@
 #include <sys/types.h>
 #include <stdint.h>
-
+#include "os_generic.h"
 #include <GL/glew.h>
 #include "graphicscore.h"
 #include <GL/glext.h>
@@ -52,48 +52,27 @@ static void ShaderErrorPrint( GLint shader )
 	}
 }
 
-
-
-/*
-struct Shader
+static int LoadShaderInPlace( struct Shader * ret )
 {
-	GLuint vertex;
-	GLuint fragment;
-	GLint  compiled;
-};
-*/
-struct Shader * CreateShader( const char * file )
-{
-	struct Shader * ret;
-	int lnl = strlen( file );
-	char * lfv, *lff;
 	unsigned char * VertexText;
 	unsigned char * FragmentText;
 	GLint compiled;
-
-	lfv = malloc( lnl + 8 );
-	sprintf( lfv, "%s.vert", file );
-	VertexText = ReadDataFile( lfv );
+	
+	VertexText = ReadDataFile( ret->VertexName );
 	if( !VertexText )
 	{
-		fprintf( stderr, "Error: Could not open vertex shader: %s\n", lfv );
-		free( lfv );
-		return 0;
+		fprintf( stderr, "Error: Could not open vertex shader: %s\n", ret->VertexName );
+		return 1;
 	}
 
-	lff = malloc( lnl + 8 );
-	sprintf( lff, "%s.frag", file );
-	FragmentText = ReadDataFile( lff );
+	FragmentText = ReadDataFile( ret->FragmentName );
 	if( !FragmentText )
 	{
-		fprintf( stderr, "Error: Could not open fragment shader: %s\n", lff );
-		free( lff );
-		free( lfv );
+		fprintf( stderr, "Error: Could not open fragment shader: %s\n", ret->FragmentName );
 		free( VertexText );
-		return 0;
+		return 1;
 	}
 
-	ret = malloc( sizeof( struct Shader ) );
 	ret->vertex = glCreateShader(GL_VERTEX_SHADER);
 	ret->fragment = glCreateShader(GL_FRAGMENT_SHADER);
 
@@ -107,7 +86,7 @@ struct Shader * CreateShader( const char * file )
 	glGetShaderiv(ret->vertex, GL_COMPILE_STATUS, &compiled);
 	if(!compiled)
 	{
-		fprintf( stderr, "Error: Could not compile vertex shader: %s\n", lfv );
+		fprintf( stderr, "Error: Could not compile vertex shader: %s\n", ret->VertexName );
 		ShaderErrorPrint( ret->vertex );
 
 		goto cancel;
@@ -118,7 +97,7 @@ struct Shader * CreateShader( const char * file )
 	glGetShaderiv(ret->fragment, GL_COMPILE_STATUS, &compiled);
 	if(!compiled)
 	{
-		fprintf( stderr, "Error: Could not compile fragment shader: %s\n", lff );
+		fprintf( stderr, "Error: Could not compile fragment shader: %s\n", ret->FragmentName );
 		ShaderErrorPrint( ret->fragment );
 
 		goto cancel;
@@ -136,7 +115,7 @@ struct Shader * CreateShader( const char * file )
 	glGetProgramiv(ret->program, GL_LINK_STATUS, (GLint *)&IsLinked);
 	if(!IsLinked)
 	{
-		fprintf( stderr, "Error: Could not link shader: %s\n", file );
+		fprintf( stderr, "Error: Could not link shader: %s + %s\n", ret->VertexName, ret->FragmentName );
 		GLint maxlen;
 		glGetProgramiv(ret->program, GL_INFO_LOG_LENGTH, &maxlen);
 
@@ -150,24 +129,65 @@ struct Shader * CreateShader( const char * file )
 		goto cancel_with_program;
 	}
 
+	return 0; //Happy!
 
-	return ret;
 cancel_with_program:
 	glDetachShader(ret->program, ret->vertex);
 	glDetachShader(ret->program, ret->fragment );
 	glDeleteShader(ret->program);
 cancel:
-	free( lff );
-	free( lfv );
 	free( VertexText );
 	free( FragmentText );
 
 	glDeleteShader( ret->vertex );
 	glDeleteShader( ret->fragment );
-	free( ret );
-	return 0;
-
+	return 1;
 }
+
+
+struct Shader * CreateShader( const char * file )
+{
+	struct Shader * ret;
+	int lnl = strlen( file );
+	char * lfv, *lff;
+
+	lfv = malloc( lnl + 8 );
+	sprintf( lfv, "%s.vert", file );
+
+	lff = malloc( lnl + 8 );
+	sprintf( lff, "%s.frag", file );
+
+	ret = malloc( sizeof( struct Shader ) );
+	ret->VertexName = lfv;
+	ret->FragmentName = lff;
+	ret->LastFileTimeVertex = OGGetFileTime( lfv );
+	ret->LastFileTimeFragment = OGGetFileTime( lff );
+
+	if( LoadShaderInPlace( ret ) )
+	{
+		free( lff );
+		free( lfv );
+		free( ret );
+		return 0;
+	}
+	else
+	{
+		return ret;
+	}
+}
+
+void DeleteShader( struct Shader * s )
+{
+	glDetachShader(s->program, s->vertex);
+	glDetachShader(s->program, s->fragment );
+	glDeleteShader(s->program);
+	glDeleteShader(s->vertex );
+	glDeleteShader(s->fragment );
+	free(s->VertexName );
+	free(s->FragmentName );
+	free(s);
+}
+
 
 
 struct UniformMatch * UniformMatchMake( const char* name, float * data, int intcount, int floatcount, struct UniformMatch * prev )
@@ -230,8 +250,28 @@ void ApplyShader( struct Shader * shader, struct UniformMatch * m )
 	//Need to bind things...
 }
 
-void CancelShader()
+void CancelShader( struct Shader * s )
 {
 	glUseProgramObjectARB( 0 );
 }
+
+void CheckForNewerShader( struct Shader * s )
+{
+	double VertTime = OGGetFileTime( s->VertexName );
+	double FragTime = OGGetFileTime( s->FragmentName );
+
+	if( s->LastFileTimeVertex != VertTime || s->LastFileTimeFragment != FragTime )
+	{
+		glDetachShader(s->program, s->vertex);
+		glDetachShader(s->program, s->fragment );
+		glDeleteShader(s->program);
+		glDeleteShader(s->vertex );
+		glDeleteShader(s->fragment );
+		LoadShaderInPlace( s );
+	}
+
+	s->LastFileTimeVertex = VertTime;
+	s->LastFileTimeFragment = FragTime;
+}
+
 

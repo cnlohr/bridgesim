@@ -64,10 +64,8 @@ def Distance(a, b): #Distance returns the distance between two vectors of length
 def Angle(a,b):
   cos=Dot(Normalize(a),Normalize(b))
   if cos > 1:
-    print("Rounded by:", cos - 1)
     cos = 1
   if cos < -1:
-    print("Rounded by:", cos + 1)
     cos = -1
   return math.acos(cos)
 

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import gameObjects
-import timeit
+import traceback
 try:
   import ConfigParser
 except ImportError:
@@ -44,8 +44,10 @@ initPlayers(1)
 initEnemyGroups(300)
 
 #print(universe.state())
-
-while True:
-  rate = 10/timeit.timeit(universe.tick, number=10)
-  print ("Frame Rate: %f" % rate)
+try:
+  while True:
+    universe.tick()
+except:
+  gameObjects.shutdown()
+  print (traceback.format_exc())
  # print (universe.enemies[1].location)

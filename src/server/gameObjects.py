@@ -1,8 +1,11 @@
 from physics import *
-import pyNetwork as network
+import network as network
 from random import randint
 
 universe = None
+
+def shutdown():
+  network.shutdown()
 
 class Universe:
   playerShips = []

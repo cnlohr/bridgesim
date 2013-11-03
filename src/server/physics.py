@@ -62,7 +62,14 @@ def Distance(a, b): #Distance returns the distance between two vectors of length
     return 0
 
 def Angle(a,b):
-  return math.acos(Dot(a,b)/(Magnitude(a)*Magnitude(b)))
+  cos=Dot(Normalize(a),Normalize(b))
+  if cos > 1:
+    print("Rounded by:", cos - 1)
+    cos = 1
+  if cos < -1:
+    print("Rounded by:", cos + 1)
+    cos = -1
+  return math.acos(cos)
 
 def AngleVectorToQuaternion(angle, vector):
   normvector = Normalize(list(vector))

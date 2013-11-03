@@ -29,21 +29,6 @@ CentServerAddCB( server_handle, b"/*", gencallback, 44 )
 
 #CentServerAddCB( server_handle, b"/*", CENTCB(my_callback_function), 44 )
 
-def update(entityType, name, data):
-  ChangeValue( server_handle, CreateCent(data.type(), 0x80, 1, data.length(), data.string() ), 1 );
-  time.sleep(.01)
-  
-class data:
-  def __init__(self, dataType, contents):
-    self.dataType = dataType
-    self.contents = contents
-  def string(self):
-    if self.dataType == "loc":  
-      floats = ctypes.c_float * 3
-      return floats(*self.contents)
-  def type(self):
-    if self.dataType == "loc":
-      return b"/sta"
-  def length(self):
-    if self.dataType == "loc":
-      return 12
+def update(dataName, dataList):
+  floats = ctypes.c_float * len(dataList)
+  ChangeValue(server_handle, CreateCent(compatBytes(dataName), 0x80, 1, 4*len(dataList), floats(*dataList)), 1)

@@ -42,7 +42,7 @@ typedef void (*CentCallback)( struct CentConnection * s, struct Cent * tn, void 
 struct CentMatchCallback
 {
 	CentCallback cb;
-	const char * match;
+	char * match; //Will be copied, and must be deleted with structure.
 	struct CentMatchCallback * next;
 	void * id;
 };
@@ -119,6 +119,7 @@ void SendEvent( struct CentServer * conn, struct Cent * c, int dontneedtocopy );
 
 //Todo: Add utility to close connection (and clean it up better)
 struct CentConnection * CentConnect( const char * addy, int port );
+void ClientStop( struct CentConnection * c );
 void CentClientAddCB( struct CentConnection * conn, unsigned char * filter, CentCallback cb, void * id );
 void SendEventClient( struct CentConnection * conn, struct Cent * c, int dontneedtocopy );
 

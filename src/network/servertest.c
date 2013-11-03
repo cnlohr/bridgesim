@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include "os_generic.h"
 
+struct CentServer * sv;
+
 void MyServerCentCB( struct CentConnection * s, struct Cent * tn, void * id )
 {
 	printf( "Server: %s %p\n", tn->name, id );
@@ -12,7 +14,7 @@ void MyServerCentCB( struct CentConnection * s, struct Cent * tn, void * id )
 void * CentServerThread( void *  v)
 {
 	int i = 0, q = 0;
-	struct CentServer * sv = StartCentServer( "0.0.0.0", 8553 );
+	sv = StartCentServer( "0.0.0.0", 8553 );
 
 	CentServerAddCB( sv, "*", MyServerCentCB, 0 );
 	printf( "Server: %p\n", sv );
@@ -72,6 +74,7 @@ void * CentClientThread( void * v )
 
 int main()
 {
+	int i;
 	og_thread_t server;
 	og_thread_t client;
 
@@ -79,9 +82,12 @@ int main()
 	OGSleep(1);
 	client = OGCreateThread( CentClientThread, 0 );
 
-	while(1)
+	for( i = 0; i < 10; i++ )
 	{
 		OGSleep(1);
 	}
+
+	CentStop( sv );
+
 }
 

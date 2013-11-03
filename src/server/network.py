@@ -26,9 +26,18 @@ def my_callback_function( conn, data, ids ):
 server_handle = StartCentServer(b"0.0.0.0", 8553);
 CentServerAddCB( server_handle, b"/*", CENTCB(my_callback_function), 44 );
 
+compatBytes = bytes
+try:
+  bytes("foo", 'ascii')
+except TypeError:
+  def compatBytes(string, enc=None):
+    return bytes(string)
+
+
 # This is used to send a packet to the clients to update entity information
 def update(entityType, name, data):
-  ChangeValue( server_handle, CreateCent( bytes(b"/e/"+bytes(entityType, 'ascii')+b"/"+bytes(name, 'ascii')+b"/")+data.string() ), 1 );
+  print ("Entity: "+entityType+" Name: "+name+" Data: "+str(data.string()))
+  ChangeValue( server_handle, CreateCent( compatBytes(b"/e/"+compatBytes(entityType, 'ascii')+b"/"+compatBytes(name, 'ascii')+b"/")+data.string() ), 1 );
   
 # This is used to convert python datatypes to the network types we use
 class data:
@@ -38,7 +47,7 @@ class data:
   def string(self):
     if self.dataType == "loc":  
       floats = ctypes.c_float * 3
-      return b"loc"+bytes(0x80)+bytes(1)+bytes(12)+bytes(floats(*self.contents))
+      return b"loc"+compatBytes(0x80)+compatBytes(1)+compatBytes(12)+compatBytes(floats(*self.contents))
 
       
     

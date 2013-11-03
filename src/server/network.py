@@ -38,7 +38,7 @@ except TypeError:
 # This is used to send a packet to the clients to update entity information
 def update(entityType, name, data):
   print (data.string())
-  cent = CreateCent(data.type(), 0x80, 1, len(data.string()), data.string())
+  cent = CreateCent(data.type(), 0x80, 1, data.length(), data.string())
   ChangeValue( server_handle, cent, 1 );
   
 # This is used to convert python datatypes to the network types we use
@@ -49,10 +49,13 @@ class data:
   def string(self):
     if self.dataType == "loc":  
       floats = ctypes.c_float * 3
-      return compatBytes(ctypes.pointer(floats(*self.contents)))
+      return floats(*self.contents)
   def type(self):
     if self.dataType == "loc":
       return b"/loc"
+  def length(self):
+    if self.dataType == "loc":
+      return 12
 
       
     

@@ -156,7 +156,7 @@ class Station:
           min = i
       self.producing = min
       self.progress = universe.TPS * universe.tubeAmmos[self.producing].buildCost
-    network.update("sta", self.name, network.data("loc", self.location))
+    network.update("/sta/"+self.name+"/loc", self.location)
 
   def dock(self, playerShip):
     if self.canDock == 1:
@@ -505,7 +505,7 @@ class enemyShip():
       self.velocity = VectorMultiply(1-self.drag, self.velocity)
       self.location = VectorAdd(self.location, VectorMultiply(universe.timeMultiplier, self.velocity))
     #TODO put some firing here.
-    network.update("ene", self.name, network.data("loc", self.location))
+    network.update("/ene/"+self.name+"/loc", self.location)
 
   def damage(self, damage, sourceType, source, location, frequency):
     angle = Angle(OrientationVector(OrientationQuaternion(self.location, location), universe.referenceOrientation), OrientationVector(self.rotation))

@@ -6,7 +6,7 @@
 void MyClientCentCB( struct CentConnection * s, struct Cent * tn, void * id )
 {
 	float * values = (float*)tn->data;
-	printf( "CLIENT: %s %p %f %f\n", tn->name, id, values[0], values[1] );
+	printf( "CLIENT: %s %p %f %f %f\n", tn->name, id, values[0], values[1], values[2] );
 }
 
 
@@ -16,7 +16,7 @@ void * CentClientThread( void * v )
 	int q;
 	struct CentConnection * conn = CentConnect( "127.0.0.1", 8553 );
 
-	CentClientAddCB( conn, "*i", MyClientCentCB, (void*)1 );
+	CentClientAddCB( conn, "sta", MyClientCentCB, (void*)1 );
 	CentClientAddCB( conn, "/*/mark", MyClientCentCB, 0 );
 
 	while(1)

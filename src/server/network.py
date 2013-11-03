@@ -1,5 +1,4 @@
 import ctypes
-import time
 
 cent = ctypes.CDLL("../network/cent.so")
 
@@ -17,9 +16,6 @@ CentGetDataFromCent_Float.restype = ctypes.POINTER(ctypes.c_float)
 
 def my_callback_function( conn, data, ids ):
         fields = CentGetDataFromCent_Float( data );
-        print (fields[0])
-        print (fields[1])
-        print (ids)
 
 CENTCB = ctypes.CFUNCTYPE( ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p );
 server_handle = StartCentServer(b"0.0.0.0", 8553);
@@ -27,11 +23,8 @@ server_handle = StartCentServer(b"0.0.0.0", 8553);
 gencallback = CENTCB(my_callback_function)
 CentServerAddCB( server_handle, b"/*", gencallback, 44 )
 
-#CentServerAddCB( server_handle, b"/*", CENTCB(my_callback_function), 44 )
-
 def update(entityType, name, data):
   ChangeValue( server_handle, CreateCent(data.type(), 0x80, 1, data.length(), data.string() ), 1 );
-  time.sleep(.01)
   
 class data:
   def __init__(self, dataType, contents):

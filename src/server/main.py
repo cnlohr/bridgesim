@@ -1,6 +1,9 @@
 #!/usr/bin/python
 import gameObjects
-import configparser
+try:
+  import ConfigParser
+except ImportError:
+  import configparser as ConfigParser
 
 universe = gameObjects.Universe(TPS=30, difficulty=5)
 gameObjects.universe = universe
@@ -11,7 +14,7 @@ def initStations(count):
     universe.stations.append(station)
 
 def initWeapons():
-  config = configparser.RawConfigParser()
+  config = ConfigParser.RawConfigParser()
   config.read('weapons.conf')
   weapons = config.sections()
   for i in weapons:

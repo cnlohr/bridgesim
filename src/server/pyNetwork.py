@@ -1,6 +1,9 @@
 import struct
 import socket
-import SocketServer
+try:
+  import SocketServer
+except ImportError:
+  import socketserver as SocketServer
 import threading
 
 bindIP, bindPort = "localhost", 8553
@@ -14,6 +17,7 @@ except TypeError:
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
   def sendall(self, data):
     self.request.sendall(data)
+    
 class MyTCPHandler(SocketServer.BaseRequestHandler):
   def handle(self):
     self.data = self.request.recv(1024)

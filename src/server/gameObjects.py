@@ -1,5 +1,5 @@
 from physics import *
-import network
+import network as network
 from random import randint
 
 universe = None

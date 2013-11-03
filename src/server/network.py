@@ -33,11 +33,13 @@ except TypeError:
   def compatBytes(string, enc=None):
     return bytes(string)
 
+# c = CreateCent( "/hi", CENTFLAGS_OK, CENTCODES_FLOATS, 8, (void*)fvs2 );
 
 # This is used to send a packet to the clients to update entity information
 def update(entityType, name, data):
-  print ("Entity: "+entityType+" Name: "+name+" Data: "+str(data.string()))
-  ChangeValue( server_handle, CreateCent( compatBytes(b"/e/"+compatBytes(entityType, 'ascii')+b"/"+compatBytes(name, 'ascii')+b"/")+data.string() ), 1 );
+  print (data.string())
+  cent = CreateCent(data.type(), 0x80, 1, len(data.string()), data.string())
+  ChangeValue( server_handle, cent, 1 );
   
 # This is used to convert python datatypes to the network types we use
 class data:
@@ -47,7 +49,10 @@ class data:
   def string(self):
     if self.dataType == "loc":  
       floats = ctypes.c_float * 3
-      return b"loc"+compatBytes(0x80)+compatBytes(1)+compatBytes(12)+compatBytes(floats(*self.contents))
+      return compatBytes(ctypes.pointer(floats(*self.contents)))
+  def type(self):
+    if self.dataType == "loc":
+      return b"/loc"
 
       
     

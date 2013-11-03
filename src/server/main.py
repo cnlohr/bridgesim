@@ -42,8 +42,8 @@ initStations(4)
 initPlayers(1)
 initEnemyGroups(3)
 
-print(universe.state())
+#print(universe.state())
 
 while True:
   universe.tick()
-  print (universe.enemies[1].location)
+ # print (universe.enemies[1].location)

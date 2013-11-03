@@ -16,7 +16,7 @@ void * CentClientThread( void * v )
 	int q;
 	struct CentConnection * conn = CentConnect( "127.0.0.1", 8553 );
 
-	CentClientAddCB( conn, "*i", MyClientCentCB, (void*)1 );
+	CentClientAddCB( conn, "*loc", MyClientCentCB, (void*)1 );
 	CentClientAddCB( conn, "/*/mark", MyClientCentCB, 0 );
 
 	while(1)

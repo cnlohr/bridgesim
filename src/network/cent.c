@@ -183,6 +183,7 @@ void * ServerWorkerThreadSend( void * v )
 
 					place += rs;
 				}
+				free( pl );
 			}
 		}
 		else
@@ -299,6 +300,17 @@ keepgoing:
 	OGLockSema( nc->okforrecvtoshutdown );
 
 	//Handle cleaning things up.
+
+	struct CentMatchCallback * del = nc->firstcb;
+	while( del )
+	{
+		struct CentMatchCallback * tmp = del->next;
+		free( del->match );
+		free( del );
+		del = tmp;
+	}
+
+	HashDestroy( nc->LastValues, 1 );
 
 	//XXX TODO CLEAN UP SOCKET AND MEMORY!!!
 
@@ -497,7 +509,14 @@ void CentStop( struct CentServer * conn )
 		close( nc->socket );
 	}
 
-	//XXX TODO: Properly dispose of all CENTs in Events and AllValues
+	OGLockSema( conn->eventsema );
+	for( i = 0; i < MAX_EVENTS; i++ )
+	{
+		if( conn->Events[i] )
+			FreeCent( conn->Events[i] );
+	}
+
+	HashDestroy( conn->AllValues, 1 );
 }
 
 
@@ -547,6 +566,11 @@ void SendEvent( struct CentServer * conn, struct Cent * c, int dontneedtocopy )
 	conn->event_head = (conn->event_head+1)%MAX_EVENTS;
 
 	OGUnlockSema( conn->eventsema );
+}
+
+void ClientStop( struct CentConnection * c )
+{
+	close( c->socket );
 }
 
 void SendEventClient( struct CentConnection * conn, struct Cent * c, int dontneedtocopy )

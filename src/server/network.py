@@ -29,6 +29,13 @@ CentServerAddCB( server_handle, b"/*", gencallback, 44 )
 
 #CentServerAddCB( server_handle, b"/*", CENTCB(my_callback_function), 44 )
 
+compatBytes = bytes
+try:
+  bytes("foo")
+except TypeError:
+  def compatBytes(string):
+    return bytes(string, 'ascii')
+
 def update(dataName, dataList):
   floats = ctypes.c_float * len(dataList)
   ChangeValue(server_handle, CreateCent(compatBytes(dataName), 0x80, 1, 4*len(dataList), floats(*dataList)), 1)

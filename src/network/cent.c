@@ -167,8 +167,6 @@ void * ServerWorkerThreadSend( void * v )
 					*oldval = newval->lastChange;
 
 					//Nope!  New change.  Send it.
-					for( i = 0; i < 20; i++ ) printf( "%02x ", buffer[i+place] ) ;
-					printf( "\n" );
 					int rs = TackCentItem( newval, &buffer[place], MAX_OUT_BUFFER-place-1 );
 
 					if( rs < 0 ) //out of room?

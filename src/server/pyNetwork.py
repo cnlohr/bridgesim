@@ -1,4 +1,5 @@
 import struct
+import threading
 import socket
 try:
   import SocketServer
@@ -13,24 +14,32 @@ try:
 except TypeError:
   def compatBytes(string):
     return bytes(string, 'ascii')
-
-class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
-  def sendall(self, data):
-    self.request.sendall(data)
-    
+  
 class MyTCPHandler(SocketServer.BaseRequestHandler):
   def handle(self):
-    self.data = self.request.recv(1024)
-    print(self.data)
+    data = self.request.recv(1024)
+    cur_thread = threading.current_thread()
+    response = "{}: {}".format(cur_thread.name, data)
+    print response
+    self.request.sendall(response)
+    
+class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+  pass
 
-server = ThreadedTCPServer((bindIP, bindPort), MyTCPHandler)
-
-server_thread = threading.Thread(target=server.serve_forever)
-# Exit the server thread when the main thread terminates
-server_thread.daemon = True
-server_thread.start()
-
+server = SocketServer.TCPServer((bindIP, bindPort), MyTCPHandler)
+serverThread = threading.Thread(target=server.serve_forever)
+serverThread.daemon = True
+serverThread.start()
 def update(dataName, dataList):
-  packet = compatBytes(dataName)+compatBytes(0x80)+compatBytes(1+4*len(dataList))+compatBytes(struct.pack("%df" % len(dataList), *dataList))+compatBytes(1)
-  print(dir(server))
-  server.sendall(packet)
+  packet = compatBytes(dataName)
+  packet += compatBytes(0x80)
+  packet += compatBytes(1)
+  packet += compatBytes(4*len(dataList))
+  packet += struct.pack("%df" % len(dataList), *dataList)
+  packet += compatBytes(1)
+#  print(dir(server))
+#  print packet
+#  serverThread.sendall(packet)
+  
+def shutdown():
+  server.shutdown()

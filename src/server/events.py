@@ -43,10 +43,10 @@ class Event:
     if self.repeat_count > 0:
       self.next_due = self.next_due + self.repeat_interval
       self.repeat_count -= 1
-  def __cmp__(self, other):
+  def __lt__(self, other):
     if not isinstance(other, Event):
       raise TypeError("Cannot compare %s to %s" % (self, other))
-    return cmp(self.next_due, other.next_due)
+    return self.next_due < other.next_due
 
 class QueueExecutor:
   @classmethod

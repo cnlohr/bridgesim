@@ -8,37 +8,35 @@ def shutdown():
   network.shutdown()
 
 class Universe:
-  playerShips = []
-  stations = []
-  tubeAmmos = []
-  enemies = []
-  enemyGroups = []
-  missiles = []
-  enemyMissiles = []
-  fighters = []
-  referenceOrientation = [1,1,1] #this should be arbitrary; but changing it is useful for testing purposes sometimes.
-  TPS = 30
-  timeMultiplier = 1/TPS
-  difficulty = 0
   
   def __init__(self, TPS=30, difficulty=5):
     self.TPS = TPS
     self.difficulty = difficulty
+    self.last_seen_tick = 0
+    self.playerShips = []
+    self.stations = []
+    self.tubeAmmos = []
+    self.enemies = []
+    self.enemyGroups = []
+    self.missiles = []
+    self.enemyMissiles = []
+    self.fighters = []
+    self.referenceOrientation = [1,1,1] #this should be arbitrary; but changing it is useful for testing purposes sometimes.
+
+  @property
+  def timeMultiplier(self):
+    return 1./TPS
     
-  def tick(self):
-    for i in self.playerShips:
-      i.physics()
-    for i in self.stations:
-      i.physics()
-    for i in self.enemyGroups:
-      i.physics()
-    for i in self.enemies:
-      i.physics()
-    for i in self.missiles:
-      i.physics()
-    for i in self.fighters:
-      i.physics()
-    
+  def tick(self, newTick):
+    ticksToDo = newTick - self.last_seen_tick
+    for i in self.physicsObjects:
+      i.physics(ticksToDo)
+    self.last_seen_tick = newTick
+  
+  @property
+  def physicsObjects(self):
+    return chain(self.playerShips, self.stations, self.enemyGroups, self.enemies, self.missiles, self.fighters)
+  
   def state(self):
     print ("Player Ships:")
     for i in self.playerShips:
@@ -152,6 +150,7 @@ class Station:
       self.shields = self.shields + .1 * universe.timeMultiplier
       self.energy = self.energy - 6 * universe.timeMultiplier
     if self.progress == 0:
+      updates.extend(i.tick(duration))
       self.stock[self.producing] = self.stock[self.producing] + 1
       min = 0
       for i in range(len(self.stock)):

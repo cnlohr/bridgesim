@@ -1,6 +1,9 @@
 #!/usr/bin/python
-import gameObjects
+from gameObjects import *
 import traceback
+import network
+import time
+
 try:
   import ConfigParser
 except ImportError:
@@ -11,43 +14,30 @@ try:
 except NameError:
   xrange = range
 
-universe = gameObjects.Universe(TPS=30, difficulty=5)
-gameObjects.universe = universe
-      
-def initStations(count):
-  for i in xrange(count):
-    station = gameObjects.Station(i, universe)
-    universe.stations.append(station)
+def getConfig(server):
+  #Eventually, this function will get config from the clients
+  config = {"difficulty":5, "mapType":"random", "ships":[{"type":"Player", "name":"Fartemis", "players":["127.0.0.1"]}], "height":1000, "width":1000, "frameRate":30, "teams":["foo"]}
+  return config
+  
+def mapGenerator(config):
+  entities = []
+  for i in config['ships']:
+    entities.append(Ship(i))
+  for i in xrange(int(config['difficulty'])):
+    conf = {"Type":"Enemy", "id":i}
+    entities.append(Ship(conf))
+  return entities
 
-def initWeapons():
-  config = ConfigParser.RawConfigParser()
-  config.read('weapons.conf')
-  weapons = config.sections()
-  for i in weapons:
-    tubeAmmoInfo = dict(config.items(i))
-    tubeAmmoInfo['name'] = i
-    tubeAmmo = gameObjects.TubeAmmo(tubeAmmoInfo)
-    universe.tubeAmmos.append(tubeAmmo)
+server = network.Server("0.0.0.0", 8553)
+server.waitForStart()
+config = getConfig(server)
+universe = Universe(height=config['height'], width=config['width'])
+entities = mapGenerator(config)
+universe.add(entities)
+universe.teams = config['teams']
 
-def initEnemyGroups(count):
-  for i in xrange(count):
-    enemyGroup = gameObjects.EnemyGroup(i, universe)
-    universe.enemyGroups.append(enemyGroup)
-    
-def initPlayers(count):
-  for i in xrange(count):
-    universe.playerShips.append(gameObjects.PlayerShip(i, "Fartemis", universe))
-    
-initWeapons()
-initStations(40)
-initPlayers(1)
-initEnemyGroups(1)
-
-try:
-  while True:
-    universe.tick()
-    print (universe.enemies[1].location)
-except:
-  gameObjects.shutdown()
-  print (traceback.format_exc())
- # print (universe.enemies[1].location)
+while True:
+  messages = server.getMessages()
+  universe.tick(config['frameRate'])
+  server.send(universe.dumpState())
+  

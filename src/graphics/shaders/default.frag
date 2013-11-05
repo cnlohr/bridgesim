@@ -14,7 +14,7 @@ void main()
     vec4 DiffuseColor;
 
 	DiffuseColor = ( texture2D(tex0,gl_TexCoord[0].st) + EmissionColor ) * gl_Color;
-
+//	DiffuseColor = ( texture2D(tex0,gl_TexCoord[0].st) );
  
     // Scaling The Input Vector To Length 1
     vec3 normalized_normal = normalize(normal);
@@ -24,8 +24,10 @@ void main()
     float DiffuseTerm = clamp(dot(normal, vertex_to_light_vector), 0.0, 1.0);
  
     // Calculating The Final Color
-//    gl_FragColor = AmbientColor + DiffuseColor * DiffuseTerm;
-	gl_FragColor = vec4( 1., 0., .5 ,1. );
+    gl_FragColor = AmbientColor + DiffuseColor;// * DiffuseTerm;
+//	gl_FragColor = vec4( texture2D(tex0,gl_TexCoord[0].st).xyz + gl_TexCoord[0].rgb, 1 );
+
+//	gl_FragColor = vec4( 1., 0., .5 ,1. );
 }
 
 

@@ -8,6 +8,23 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef WIN32
+
+#include <windows.h>
+
+//For graphics loading.
+#include <gdiplus/gdiplus.h>
+#include <gdiplus/gdiplusflat.h>
+
+#else
+#ifdef USE_PNG
+#include <png.h>
+#endif
+#ifdef USE_JPG
+#include <jpeglib.h>
+#endif
+#endif
+
 unsigned char * ReadDataFile( const char * name )
 {
 	int r;
@@ -163,17 +180,9 @@ struct Shader * CreateShader( const char * file )
 	ret->LastFileTimeVertex = OGGetFileTime( lfv );
 	ret->LastFileTimeFragment = OGGetFileTime( lff );
 
-	if( LoadShaderInPlace( ret ) )
-	{
-		free( lff );
-		free( lfv );
-		free( ret );
-		return 0;
-	}
-	else
-	{
-		return ret;
-	}
+	LoadShaderInPlace( ret );
+
+	return ret;
 }
 
 void DeleteShader( struct Shader * s )
@@ -274,4 +283,629 @@ void CheckForNewerShader( struct Shader * s )
 	s->LastFileTimeFragment = FragTime;
 }
 
+
+
+
+
+//TEXTURE/////////////////////////////////////////////////////////////////////
+
+//For things that require GL_RGBA when dealing with floating point data; usually when dealing with verticies or host data.
+static GLuint imTypes[] = { 0, GL_LUMINANCE8, GL_LUMINANCE8_ALPHA8, GL_RGB, GL_RGBA, GL_RGBA16F_ARB, GL_RGBA32F_ARB, 0 };
+static GLuint imXTypes[] ={ 0, GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_RGB, GL_RGBA, GL_RGBA, GL_RGBA, 0 };
+static GLuint byTypes[] = { 0, GL_UNSIGNED_BYTE, GL_UNSIGNED_BYTE, GL_UNSIGNED_BYTE, GL_UNSIGNED_BYTE, GL_FLOAT, GL_FLOAT, 0 };
+static int channels[] = { 0, 1, 2, 3, 4, 4, 4, 0 };
+
+
+struct Texture * CreateTexture()
+{
+	struct Texture * ret = malloc( sizeof( struct Texture ) );
+	ret->format = TTUNDEFINED;
+	ret->type = 0;
+	ret->texture = 0xaaaaaaaa;
+	glGenTextures( 1, &ret->texture );
+	ret->width = 0;
+	ret->rawdata = 0;
+	ret->height = 0;
+	ret->slot = 0;
+	return ret;
+}
+
+
+void MakeDynamicTexture2D( struct Texture * t, int width, int height, enum TextureType tt )
+{
+	t->width = width;
+	t->height = height;
+	t->format = tt;
+	t->type = GL_TEXTURE_2D;
+
+	glBindTexture( t->type, t->texture );
+	glCopyTexImage2D( t->type, 0, imTypes[t->format], 0, 0, width, height, 0 );
+	glTexParameteri( t->type, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+	glTexParameteri( t->type, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+	glBindTexture( t->type, 0 );
+}
+
+#ifdef WIN32
+
+
+
+int ReadTextureFromFile( struct Texture * t, const char * filename )
+{
+	int i;
+	HGLOBAL hMem;
+	LPVOID pMemImage;
+	IStream *pStm;
+	struct GdiplusStartupInput gdiplusStartupInput;
+	ULONG_PTR gdiplusToken;
+	GpBitmap *pImg;
+	PixelFormat PixelFormat;
+
+	//Read in data
+	FILE * f = fopen( filename, "rb");
+	if( !f )
+	{
+		fprintf( stderr, "Error: Could not open %s\n", filename );
+		return -1;
+	}
+	fseek(f,0,SEEK_END);
+	int l = ftell( f );
+	unsigned char * buffer = malloc( l );
+	fseek(f,0,SEEK_SET);
+	fread(buffer, l, 1, f );
+	fclose( f );
+
+	//Prepare GDI+ imaging
+	hMem = GlobalAlloc( GMEM_MOVEABLE, l );
+	pMemImage = GlobalLock( hMem);
+	memcpy( pMemImage, buffer, l );
+	GlobalUnlock( hMem );
+
+	//XXX: This requries OLE32, do we really want it?
+	CreateStreamOnHGlobal( hMem, TRUE, &pStm );
+
+	gdiplusStartupInput.GdiplusVersion = 1;
+	gdiplusStartupInput.DebugEventCallback = NULL;
+	gdiplusStartupInput.SuppressBackgroundThread = FALSE;
+	gdiplusStartupInput.SuppressExternalCodecs = FALSE;
+	GdiplusStartup( &gdiplusToken, &gdiplusStartupInput, NULL );
+
+	if( GdipCreateBitmapFromStream( pStm, &pImg ) )
+	{
+		fprintf( stderr, "Error: cannot decode: %s\n", filename );
+		return -2;
+	}
+
+	GdipGetImagePixelFormat( (GpImage *)pImg, &PixelFormat );
+
+	UINT width;
+	UINT height;
+	GdipGetImageHeight( (GpImage *)pImg, &height );
+	GdipGetImageWidth( (GpImage *)pImg, &width );
+	GpRect r;
+	r.X = 0;
+	r.Y = 0;
+	r.Width = width;
+	r.Height = height;
+	BitmapData bd;
+
+		enum TextureType format;
+	GLenum type; //Almost always GL_TEXTURE_2D (Could be GL_TEXTURE_3D)
+	GLuint texture;
+
+	int slot; //which texture slot (For multi-texturing)
+	uint8_t * rawdata; //May be other types, too!
+
+	t->width = width;
+	t->height = height;
+	t->type = GL_TEXTURE_2D;
+
+	//Detect if has alpha or not...
+	int ps;
+	if( PixelFormat & PixelFormatAlpha )
+	{
+		GdipBitmapLockBits(pImg,&r,ImageLockModeRead,PixelFormat32bppARGB,&bd);
+		ps = 4;
+		t->format = TTRGBA;
+	}
+	else
+	{
+		GdipBitmapLockBits(pImg,&r,ImageLockModeRead,PixelFormat24bppRGB,&bd);
+		ps = 3;
+		t->format = TTRGB;
+	}
+	printf( "STRIDE: %d\n", ps );
+	t->rawdata = malloc( ps * width * height );
+
+	int x, y;
+	if( ps == 3 )
+	{
+		for( y = 0; y < height; y++ )
+		for( x = 0; x < width; x++ )
+		{
+			t->rawdata[(x+y*width)*3+0] = ((unsigned char*)bd.Scan0)[x*3+y*bd.Stride+2];
+			t->rawdata[(x+y*width)*3+1] = ((unsigned char*)bd.Scan0)[x*3+y*bd.Stride+1];
+			t->rawdata[(x+y*width)*3+2] = ((unsigned char*)bd.Scan0)[x*3+y*bd.Stride+0];
+		}
+	}
+	else //ps = 4
+	{
+		for( y = 0; y < height; y++ )
+		for( x = 0; x < width; x++ )
+		{
+			t->rawdata[(x+y*width)*4+0] = ((unsigned char*)bd.Scan0)[x*4+y*bd.Stride+2];
+			t->rawdata[(x+y*width)*4+1] = ((unsigned char*)bd.Scan0)[x*4+y*bd.Stride+1];
+			t->rawdata[(x+y*width)*4+2] = ((unsigned char*)bd.Scan0)[x*4+y*bd.Stride+0];
+			t->rawdata[(x+y*width)*4+3] = ((unsigned char*)bd.Scan0)[x*4+y*bd.Stride+3];
+		}
+	}
+
+	GdipBitmapUnlockBits(pImg, &bd );
+	GdipDisposeImage( (GpImage *)pImg );
+	GdiplusShutdown( gdiplusToken );
+
+	return 0;
+}
+
+
+#else
+
+#ifdef USE_PNG
+static void mypngreadfn(png_struct *png, png_byte *p, png_size_t size )
+{
+	int r = fread( p, size, 1, png->io_ptr );
+}
+#endif
+
+
+#ifdef USE_JPG
+struct my_error_mgr {
+  struct jpeg_error_mgr pub;        /* "public" fields */
+
+  jmp_buf setjmp_buffer;        /* for return to caller */
+};
+
+
+typedef struct my_error_mgr * my_error_ptr;
+
+void my_error_exit (j_common_ptr cinfo)
+{
+	my_error_ptr myerr = (my_error_ptr) cinfo->err;
+	(*cinfo->err->output_message) (cinfo);
+	longjmp(myerr->setjmp_buffer, 1);
+}
+
+#endif
+
+int ReadTextureFromJPG( struct Texture * t, const char * filename )
+{
+#ifndef USE_JPG
+	fprintf( stderr, "Error.  Cannot load: %s.  JPG Support not included.\n" );
+	return -1;
+#else
+
+	//from: https://github.com/LuaDist/libjpeg/blob/master/example.c
+
+	struct jpeg_decompress_struct cinfo;
+	struct my_error_mgr jerr;
+	FILE * infile;
+	JSAMPARRAY buffer;
+	int row_stride;
+
+	if ((infile = fopen(filename, "rb")) == NULL) {
+		fprintf(stderr, "can't open %s\n", filename);
+		return 0;
+	}
+
+	cinfo.err = jpeg_std_error(&jerr.pub);
+	jerr.pub.error_exit = my_error_exit;
+
+	if (setjmp(jerr.setjmp_buffer)) {
+		jpeg_destroy_decompress(&cinfo);
+		fclose(infile);
+		return 0;
+	}
+
+	jpeg_create_decompress(&cinfo);
+
+	jpeg_stdio_src(&cinfo, infile);
+
+	(void) jpeg_read_header(&cinfo, TRUE);
+
+	(void) jpeg_start_decompress(&cinfo);
+
+	row_stride = cinfo.output_width * cinfo.output_components;
+
+	buffer = (*cinfo.mem->alloc_sarray)
+	((j_common_ptr) &cinfo, JPOOL_IMAGE, row_stride, 1);
+
+	if( cinfo.output_components != 3 && cinfo.output_components != 1 )
+	{
+		jpeg_finish_decompress(&cinfo);
+		jpeg_destroy_decompress(&cinfo);
+		fclose(infile);
+		return -2;
+	}
+
+	t->format = (cinfo.output_components==3)?TTRGB:TTGRAYSCALE;
+	t->width = cinfo.output_width;
+	t->height = cinfo.output_height;
+	t->type = GL_TEXTURE_2D;
+	t->rawdata = malloc( t->width * t->height * cinfo.output_components );
+
+	int line = 0;
+
+	while (cinfo.output_scanline < cinfo.output_height)
+	{
+		int i;
+		jpeg_read_scanlines(&cinfo, buffer, 1);
+		memcpy( &t->rawdata[row_stride * line], buffer[0], row_stride );
+		line++;
+	}
+
+fail:
+	jpeg_finish_decompress(&cinfo);
+	jpeg_destroy_decompress(&cinfo);
+	fclose(infile);
+	return 0;
+#endif
+}
+
+
+int ReadTextureFromPNG( struct Texture * t, const char * filename )
+{
+#ifdef USE_PNG
+	png_structp png_ptr;
+	png_infop info_ptr;
+	int number_of_passes;
+	png_bytep* row_pointers;
+	png_byte color_type;
+	png_byte bit_depth;
+	unsigned x;
+	int r;
+	unsigned char header[8];	// 8 is the maximum size that can be checked
+
+	FILE * fp = fopen( filename, "rb" );
+
+	//open file and test for it being a png 
+	if (!fp)
+	{
+		fprintf( stderr, "[read_png_file] File %s could not be opened for reading", filename );
+		goto quickexit;
+	}
+
+	r = fread(header, 8, 1, fp);
+
+	if (png_sig_cmp(header, 0, 8))
+	{
+		fprintf( stderr, "[read_png_file] File %s is not recognized as a PNG file", filename );
+		goto closeandquit;
+	}
+
+	//initialize stuff 
+	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+
+	if (!png_ptr)
+	{
+		fprintf( stderr, "[read_png_file] png_create_read_struct failed");
+		goto closeandquit;
+	}
+
+	info_ptr = png_create_info_struct(png_ptr);
+	if (!info_ptr)
+	{
+		fprintf( stderr, "[read_png_file] png_create_info_struct failed");
+		goto closepngandquit;
+	}
+
+	if (setjmp(png_jmpbuf(png_ptr)))
+	{
+		fprintf( stderr, "[read_png_file] Error during init_io");
+		goto closepngandquit;
+	}
+
+	png_set_sig_bytes(png_ptr, 8);
+	png_set_read_fn( png_ptr, fp, mypngreadfn );
+
+	png_read_info(png_ptr, info_ptr);
+
+	t->width = info_ptr->width;
+	t->height = info_ptr->height;
+	color_type = info_ptr->color_type;
+	bit_depth = info_ptr->bit_depth;
+
+	if (color_type == PNG_COLOR_TYPE_PALETTE)
+		png_set_palette_to_rgb(png_ptr);
+
+	number_of_passes = png_set_interlace_handling(png_ptr);
+	png_read_update_info(png_ptr, info_ptr);
+
+	// read file 
+	if (setjmp(png_jmpbuf(png_ptr)))
+	{
+		fprintf(stderr,"[read_png_file] Error during read_image");
+		goto closepngandquit;		
+	}
+
+	row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * t->height);
+	unsigned int y;
+	for ( y=0; y < (unsigned)t->height; y++)
+		row_pointers[y] = (png_byte*) malloc(info_ptr->rowbytes);
+
+	png_read_image(png_ptr, row_pointers);
+
+	png_read_end( png_ptr, info_ptr );
+	png_destroy_read_struct( &png_ptr, &info_ptr, NULL );
+
+	png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);
+
+	if (color_type & PNG_COLOR_MASK_COLOR )
+		if (color_type & PNG_COLOR_MASK_ALPHA)
+			t->format = TTRGBA;	
+		else
+			t->format = TTRGB;
+	else
+		if (color_type & PNG_COLOR_MASK_ALPHA)
+			t->format = TTGRAYALPHA;	
+		else
+			t->format = TTGRAYSCALE;
+
+
+//	SAFE_DELETE(texture->m_data);
+	t->rawdata = malloc( t->width * t->height * channels[t->format] );
+
+	switch (t->format)
+	{
+		case TTGRAYSCALE:
+			for ( y=0; y < (unsigned)t->height; ++y) {
+				png_byte* row = row_pointers[y];
+				for ( x = 0; x < t->width; ++x) {
+					png_byte* ptr = &(row[x]);
+					t->rawdata[(x + y * t->width)] = ptr[0];
+				}	
+			}
+			break;
+		case TTGRAYALPHA:
+			for ( y=0; y < (unsigned)t->height; ++y) {
+				png_byte* row = row_pointers[y];
+				for ( x = 0; x < t->width; ++x) {
+					png_byte* ptr = &(row[x*2]);
+					t->rawdata[(x + y * t->width) * 2] = ptr[0];
+					t->rawdata[(x + y * t->width) * 2 + 1] = ptr[1];
+				}	
+			}
+			break;
+		case TTRGBA:
+			for ( y=0; y < (unsigned)t->height; ++y) {
+				png_byte* row = row_pointers[y];
+				for ( x = 0; x < t->width; ++x) {
+					png_byte* ptr = &(row[x*4]);
+					t->rawdata[(x + y * t->width) * 4] = ptr[0];
+					t->rawdata[(x + y * t->width) * 4 + 1] = ptr[1];
+					t->rawdata[(x + y * t->width) * 4 + 2] = ptr[2];
+					t->rawdata[(x + y * t->width) * 4 + 3] = ptr[3];
+				}	
+			}
+			break;
+		case TTRGB:
+			for ( y=0; y < (unsigned)t->height; y++) {
+				png_byte* row = row_pointers[y];
+				for (x=0; x<t->width; x++) {
+					png_byte* ptr = &(row[x * 3]);
+					t->rawdata[(x + y * t->width) * 3] = ptr[0];
+					t->rawdata[(x + y * t->width) * 3 + 1] = ptr[1];
+					t->rawdata[(x + y * t->width) * 3 + 2] = ptr[2];
+				}	
+			}
+			break;
+		default:
+			fprintf( stderr, "Warning: Invalid color byte type for PNG.");
+			break;
+	}
+
+	for ( y=0; y < (unsigned)t->height; y++)
+		free(row_pointers[y]);
+	free(row_pointers);
+
+	t->type = GL_TEXTURE_2D;
+
+	return 0;
+closepngandquit:
+	png_read_end( png_ptr, info_ptr );
+	png_destroy_read_struct( &png_ptr, &info_ptr, NULL );
+	png_free_data(png_ptr, info_ptr, PNG_FREE_ALL, -1);	
+closeandquit:
+	fclose( fp );
+quickexit:
+	return -1;
+#else
+	fprintf( stderr, "Error.  Cannot load: %s.  PNG Support not included.\n" );
+	return -1;
+#endif
+}
+
+
+int ReadTextureFromFile( struct Texture * t, const char * filename )
+{
+	const char * extension = strrchr( filename, '.' );
+	if( extension == 0 )
+	{
+		return -1;
+	}
+	if( *extension == 0 )
+	{
+		return -1;
+	}
+
+	extension++;
+
+	if( strcmp( extension, "png" ) == 0 )
+	{
+		return ReadTextureFromPNG( t, filename );
+	} else if( strcmp( extension, "jpg" ) == 0 || strcmp( extension, "jpeg" ) )
+	{
+		return ReadTextureFromJPG( t, filename );
+	}
+	return -1;
+}
+
+#endif
+
+void UpdateDataInOpenGL( struct Texture * t )
+{
+	glEnable( GL_TEXTURE_2D );
+	glBindTexture(GL_TEXTURE_2D, t->texture);
+
+	glTexImage2D(t->type, 0, imTypes[t->format], t->width, t->height, 0, imXTypes[t->format], byTypes[t->format], t->rawdata);
+
+/*
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+*/
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+}
+
+void ActivateTexture( struct Texture * t )
+{
+	glEnable( t->type );
+	glActiveTextureARB( GL_TEXTURE0_ARB + t->slot );
+	glBindTexture(t->type, t->texture );
+}
+
+void DeactivateTexture( struct Texture * t )
+{
+	glActiveTextureARB( GL_TEXTURE0_ARB + t->slot );
+	glBindTexture(t->type, 0 );
+}
+
+
+
+
+
+//RF BUFFERS
+
+/*
+struct RFBuffer
+{
+	int width, height;
+	int use_depth_buffer;
+
+	TextureType mtt;
+
+	GLuint renderbuffer;
+	GLuint outputbuffer;
+	int outextures;
+};*/
+
+struct RFBuffer * MakeRFBuffer( int use_depth_buffer, enum TextureType type )
+{
+	struct RFBuffer * ret = malloc( sizeof( struct RFBuffer ) );
+
+	ret->mtt = type;
+	ret->use_depth_buffer = use_depth_buffer;
+	if( use_depth_buffer )
+		glGenRenderbuffersEXT( 1, &ret->renderbuffer );
+	glGenFramebuffersEXT( 1, &ret->outputbuffer );
+
+	return ret;
+}
+
+int RFBufferGo( struct RFBuffer *rb, int width, int height, int texturecount, struct Texture ** textures, int do_clear )
+{
+	int i;
+	static const GLenum buffers[8] = {   GL_COLOR_ATTACHMENT0_EXT, GL_COLOR_ATTACHMENT1_EXT, GL_COLOR_ATTACHMENT2_EXT,
+			GL_COLOR_ATTACHMENT3_EXT, GL_COLOR_ATTACHMENT4_EXT, GL_COLOR_ATTACHMENT5_EXT,
+			GL_COLOR_ATTACHMENT6_EXT, GL_COLOR_ATTACHMENT7_EXT };
+
+	for( i = 0; i < texturecount; i++ )
+	{
+		struct Texture * t = textures[i];
+		if( t->width != width || t->height != height )
+		{
+			MakeDynamicTexture2D( t, width, height, rb->mtt );
+		}
+	}
+
+	rb->width = width;
+	rb->height = height;
+	rb->outextures = texturecount;
+
+	if( rb->use_depth_buffer )
+	{
+		glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, rb->renderbuffer );
+		glRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, width, height );
+	}
+
+	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb->outputbuffer );
+	for( i = 0; i < texturecount; i++ )
+	{
+		struct Texture * t = textures[i];
+		glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + i, 
+			GL_TEXTURE_2D, t->texture, 0 );
+	}
+	if( rb->use_depth_buffer )
+		glFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, 
+			GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rb->renderbuffer );
+
+	glDrawBuffers( texturecount, buffers );
+	glViewport( 0, 0, width, height );
+
+	//Check to see if there were any errors with the framebuffer
+	switch( (GLenum)glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT) )
+	{
+		case GL_FRAMEBUFFER_COMPLETE_EXT: break;  //GOOD!
+		case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT:
+			fprintf( stderr, "OpenGL Framebuffer error: GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT_EXT\n");
+			return -1;
+		case GL_FRAMEBUFFER_UNSUPPORTED_EXT:
+			fprintf( stderr, "OpenGL Framebuffer error: GL_FRAMEBUFFER_UNSUPPORTED_EXT\n");
+			return -2;
+		case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT:
+			fprintf( stderr, "OpenGL Framebuffer error: GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT_EXT\n");
+			return -3;
+		case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
+			fprintf( stderr, "OpenGL Framebuffer error: GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT\n");
+			return -4;
+		case GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT:
+			fprintf( stderr, "OpenGL Framebuffer error: GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT\n");
+			return -5;
+		case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT:
+			fprintf( stderr, "OpenGL Framebuffer error: GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER_EXT\n");
+			return -6;
+		case GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT:
+			fprintf( stderr, "OpenGL Framebuffer error: GL_FRAMEBUFFER_INCOMPLETE_READ_BUFFER_EXT\n");
+			return -7;
+		default:
+			fprintf( stderr, "UNKNWON error with OpenGL Framebuffer\n");
+			return -8;
+	}
+
+	if( do_clear )
+		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+
+	return 0;
+}
+
+void RFBufferDone( struct RFBuffer *rb, int newwidth, int newheight )
+{
+	unsigned i;
+	for( i = 0; i < rb->outextures; i++ )
+	{
+		glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + i, 
+			GL_TEXTURE_2D, 0, 0 );
+
+		glActiveTextureARB( GL_TEXTURE0_ARB + i );
+		glDisable( GL_TEXTURE_2D );
+	}
+	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
+	glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
+	glViewport( 0, 0, newwidth, newheight );
+}
+
+void DestroyRFBuffer( struct RFBuffer *rb )
+{
+	if( rb->use_depth_buffer )
+		glDeleteRenderbuffersEXT( 1, &rb->renderbuffer );
+	glDeleteFramebuffersEXT( 1, &rb->outputbuffer );
+}
 

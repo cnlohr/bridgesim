@@ -9,15 +9,21 @@ float g_width, g_height;
 
 struct Shader * defshader;
 struct UniformMatch * shaderprops;
+struct Texture * testtex;
 
 float Ambient[4] = { .1, .1, .1, 1 };
 float Emission[4] = { 0, 0, 0, 1 };
+float TexSlot = 0;
 double StartTime;
+
+struct RFBuffer * myrb;
+struct Texture * torender;
 
 void SetupShaderProps()
 {
 	shaderprops = UniformMatchMake( "AmbientColor", Ambient, 0, 4, 0 );
 	shaderprops = UniformMatchMake( "EmissionColor", Emission, 0, 4, shaderprops );
+	shaderprops = UniformMatchMake( "tex0", &TexSlot, 1, 0, shaderprops );
 }
 
 void idle()
@@ -38,8 +44,35 @@ void display(void)
 {
 	double ElapsedTime = OGGetAbsoluteTime() - StartTime;
 
-	glClearColor( .2, .2, .2, 1 );
+	glClearColor( .2, .2, .2, 0 );
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable (GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
+
+	RFBufferGo( myrb, 100+ElapsedTime*15, 100+ElapsedTime*15, 1, &torender, 1 );
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPerspective( 45.0, 1.0, 0.1f, 500.0 );
+	glDepthFunc(GL_LESS);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+
+	glRotatef( ElapsedTime * 100, 0, 0, 1 );
+	glTranslatef( 0., 0., -10 );
+	glRasterPos2f(1.5, .5);
+	glColor3f( 1,1,1 );
+	glutWireTeapot(1.0);
+	
+
+	RFBufferDone( myrb, g_width, g_height );
+
+
+
+
+
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -48,18 +81,12 @@ void display(void)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-
-
-
 	glRotatef( ElapsedTime * 100, 0, 0, 1 );
-
 	glTranslatef( 0., 0., -10 );
 	glRasterPos2f(1.5, .5);
 	glColor3f( 1,1,1 );
 	glutBitmapString( GLUT_BITMAP_9_BY_15, "(15,51)" );
-
 	glutWireTeapot(1.0);
-
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -74,18 +101,36 @@ void display(void)
 	CheckForNewerShader( defshader );
 	ApplyShader( defshader,shaderprops );
 
-	glutSolidTeapot(1.0);
+	ActivateTexture( testtex );
 
-	glBegin(GL_TRIANGLES);
-	glColor3f(0.0, 0.0, 1.0);
-	glVertex2i(0, 0);
-	glColor3f(0.0, 1.0, 0.0);
-	glVertex2i(200, 200);
-	glColor3f(1.0, 0.0, 0.0);
-	glVertex2i(20, 200);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0, 0.0);
+	glVertex3f(0.0, 0.0, 0.0);
+	glTexCoord2f(1.0, 0.0);
+	glVertex3f(100.0, 0.0, 0.0);
+	glTexCoord2f(1.0, 1.0);
+	glVertex3f(100.0, 100.0, 0.0);
+	glTexCoord2f(0.0, 1.0);
+	glVertex3f(0.0, 100.0, 0.0);
 	glEnd();
 
+	DeactivateTexture( testtex);
+
 	CancelShader( defshader);
+
+	ActivateTexture( torender );
+	glScalef( 2, 2, 1 );
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0, 0.0);
+	glVertex3f(100.0, 0.0, 0.0);
+	glTexCoord2f(1.0, 0.0);
+	glVertex3f(200.0, 0.0, 0.0);
+	glTexCoord2f(1.0, 1.0);
+	glVertex3f(200.0, 100.0, 0.0);
+	glTexCoord2f(0.0, 1.0);
+	glVertex3f(100.0, 100.0, 0.0);
+	glEnd();
+	DeactivateTexture( torender);
 
 	glFlush();
 }
@@ -104,6 +149,13 @@ int main(int argc, char **argv)
 
 	defshader = CreateShader( "shaders/default" );
 	SetupShaderProps();
+
+	testtex = CreateTexture();
+	ReadTextureFromFile( testtex, "test.jpg" );
+	UpdateDataInOpenGL( testtex );
+
+	myrb = MakeRFBuffer( 1, TTRGBA );
+	torender = CreateTexture();
 
 	glutDisplayFunc( display );
 	glutReshapeFunc( reshape );

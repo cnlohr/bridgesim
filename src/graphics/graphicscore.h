@@ -1,4 +1,4 @@
-#ifndef _GRAPHICSCORE_H
+#ifndef _GARPHICSCORE_H
 #define _GARPHICSCORE_H
 
 #include <stdint.h>
@@ -6,6 +6,8 @@
 
 #define USE_PNG
 #define USE_JPG
+
+#define MAX_TEXTURES 16
 
 struct Shader
 {
@@ -66,8 +68,8 @@ void MakeDynamicTexture2D( struct Texture * t, int width, int height, enum Textu
 void UpdateDataInOpenGL( struct Texture * t );
 void ActivateTexture( struct Texture * t );
 void DeactivateTexture( struct Texture * t );
-
-
+void DestroyTexture( struct Texture * t );
+void ChangeTextureFilter( struct Texture * t, int linear );
 
 
 struct RFBuffer
@@ -87,11 +89,68 @@ int RFBufferGo( struct RFBuffer *rb, int width, int height, int texturecount, st
 void RFBufferDone( struct RFBuffer *rb, int newwidth, int newheight );
 void DestroyRFBuffer( struct RFBuffer *rb );
 
-//TODO: Shaders: Global parameters, i.e. for size-of-textures?
-//TODO: Model loading
-
 
 unsigned char * ReadDataFile( const char * name ); //Read a file and malloc
+
+
+
+
+//VBOs
+struct VertexData
+{
+	int vertexcount;
+	int stride;
+	GLuint vbo;
+};
+
+struct IndexData
+{
+	int indexcount;
+	GLuint * indexdata;
+};
+
+struct GPUGeometry
+{
+	struct Texture * textures[MAX_TEXTURES];
+	int todelete[MAX_TEXTURES]; //if 1, will delete texture
+
+	struct IndexData * indices;
+	int vertexcount;
+	struct VertexData ** vertexdatas;
+	char ** names;
+
+	//If 1, will cause indices, and vertexdatas to be deleted with names.  If 0, only names will be deleted.
+	int uniquedata;
+
+	GLint mode;
+};
+
+struct VertexData * VertexDataCreate();
+
+//Call with verts=0 to make a strippable buffer (GPGPU only)
+void UpdateVertexData( struct VertexData * vd, float * Verts, int iNumVerts, int iStride );
+void DestroyVertexData( struct VertexData * vd );
+
+struct IndexData * IndexDataCreate();
+void UpdateIndexData( struct IndexData * id, int indexcount, int * data );
+void DestroyIndexData( struct IndexData * id );
+
+
+
+//Names[0] doesn't matter, but for all other names, it binds to a specific shader property.
+//the 0th vd will ALWAYS be vertex position.
+//
+//if you say "texcoord" it will bind to that text coord.
+//if you say "color" it will bind to the color.
+struct GPUGeometry * CreateGeometry( struct IndexData * indices, int vertexcount, struct VertexData ** verts, char ** names, int unique, GLint mode );
+void AttachTextureToGeometry( struct GPUGeometry * g, struct Texture * texture, int place, int take_ownership_of );
+void RenderGPUGeometry( struct GPUGeometry * g );
+void DestroyGPUGeometry( struct GPUGeometry * g );
+
+
+//TODO: Shaders: Global parameters, i.e. for size-of-textures?
+//TODO: Model loading
+//TODO: Use index buffers
 
 #endif
 

@@ -2,12 +2,14 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include "graphicscore.h"
+#include "bitmapfont.h"
 #include <os_generic.h>
 #include <math.h>
 
 float g_width, g_height;
 
 struct Shader * defshader;
+struct Shader * texcoords;
 struct UniformMatch * shaderprops;
 struct Texture * testtex;
 
@@ -18,6 +20,16 @@ double StartTime;
 
 struct RFBuffer * myrb;
 struct Texture * torender;
+struct BitmapFont * mbf;
+struct BitmapFont * captureitfont;
+struct GPUGeometry * helloworld = 0;
+struct GPUGeometry * bridgesim = 0;
+
+double ElapsedTime;
+double DeltaTime;
+double LastFPSTime;
+int framecountsincefps;
+int fpscount;
 
 void SetupShaderProps()
 {
@@ -42,7 +54,19 @@ void reshape(int w, int h)
 
 void display(void)
 {
-	double ElapsedTime = OGGetAbsoluteTime() - StartTime;
+	static double LastTime;
+	ElapsedTime = OGGetAbsoluteTime() - StartTime;
+	DeltaTime = ElapsedTime - LastTime;
+	LastTime = ElapsedTime;
+
+	if( LastFPSTime + 1 < ElapsedTime )
+	{
+		LastFPSTime += 1;
+		fpscount = framecountsincefps;
+		printf( "FPS: %d\n", fpscount );
+		framecountsincefps = 0;
+	}
+	framecountsincefps++;
 
 	glClearColor( .2, .2, .2, 0 );
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -50,8 +74,7 @@ void display(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 
-
-	RFBufferGo( myrb, 100+ElapsedTime*15, 100+ElapsedTime*15, 1, &torender, 1 );
+	RFBufferGo( myrb, 100, 100, 1, &torender, 0 );
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -62,15 +85,14 @@ void display(void)
 
 	glRotatef( ElapsedTime * 100, 0, 0, 1 );
 	glTranslatef( 0., 0., -10 );
-	glRasterPos2f(1.5, .5);
 	glColor3f( 1,1,1 );
-	glutWireTeapot(1.0);
-	
+	glRasterPos2f(1.5, .5);
+	glutBitmapString( GLUT_BITMAP_9_BY_15, "(15,51)" );
+
+//	glutWireTeapot(1.0);
+
 
 	RFBufferDone( myrb, g_width, g_height );
-
-
-
 
 
 
@@ -86,7 +108,16 @@ void display(void)
 	glRasterPos2f(1.5, .5);
 	glColor3f( 1,1,1 );
 	glutBitmapString( GLUT_BITMAP_9_BY_15, "(15,51)" );
-	glutWireTeapot(1.0);
+//	glutWireTeapot(1.0);
+
+	glLoadIdentity();
+	glTranslatef( 0., -6., -30 );
+	glColor4f( 1,1,0,1 );
+	glScalef( .05, .05, .05 );
+	RenderGPUGeometry( helloworld );
+	glColor4f( 1,1,1,1 );
+
+
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -97,6 +128,12 @@ void display(void)
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
+	char st[15];
+	sprintf( st, "FPS: %d", fpscount );
+	glRasterPos2f(80, 50);
+	glutBitmapString( GLUT_BITMAP_9_BY_15, st );
+
 
 	CheckForNewerShader( defshader );
 	ApplyShader( defshader,shaderprops );
@@ -118,6 +155,9 @@ void display(void)
 
 	CancelShader( defshader);
 
+
+
+
 	ActivateTexture( torender );
 	glScalef( 2, 2, 1 );
 	glBegin(GL_QUADS);
@@ -131,6 +171,25 @@ void display(void)
 	glVertex3f(100.0, 100.0, 0.0);
 	glEnd();
 	DeactivateTexture( torender);
+
+
+	glPushMatrix();
+	glTranslatef( 0, 100, 0 );
+	glScalef( 0.1*g_width/250.0, 0.1*g_width/250.0, 0.0 );
+	glScalef(1, -1, 1);
+//	CheckForNewerShader( texcoords );
+//	ApplyShader( texcoords, shaderprops );
+
+
+	char stx[85];
+	sprintf( stx, "[BRIDGE SIM %4.2f]", ElapsedTime );
+	if( bridgesim ) DestroyGPUGeometry( bridgesim );
+	bridgesim = EmitGeometryFromFontString( captureitfont, stx );
+	RenderGPUGeometry( bridgesim );
+
+//	CancelShader( texcoords );
+
+	glPopMatrix();
 
 	glFlush();
 }
@@ -147,7 +206,8 @@ int main(int argc, char **argv)
 
 	StartTime = OGGetAbsoluteTime();
 
-	defshader = CreateShader( "shaders/default" );
+	defshader = CreateShader( "../../assets/shaders/default" );
+	texcoords = CreateShader( "../../assets/shaders/texcoords" );
 	SetupShaderProps();
 
 	testtex = CreateTexture();
@@ -156,6 +216,10 @@ int main(int argc, char **argv)
 
 	myrb = MakeRFBuffer( 1, TTRGBA );
 	torender = CreateTexture();
+
+	mbf = LoadBitmapFontByName( "../../assets/fonts/OldSansBlack.hgfont" );
+	captureitfont = LoadBitmapFontByName( "../../assets/fonts/CaptureIt.hgfont" );
+	helloworld = EmitGeometryFromFontString( mbf, "Hello, world." );
 
 	glutDisplayFunc( display );
 	glutReshapeFunc( reshape );

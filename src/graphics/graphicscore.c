@@ -25,6 +25,14 @@
 #endif
 #endif
 
+#define MAX_STORAGE 8192
+
+static struct Shader * CurrentShader;
+static GLuint FreeVBOs[MAX_STORAGE];
+static int FreeVBOHead = -1;
+
+
+
 unsigned char * ReadDataFile( const char * name )
 {
 	int r;
@@ -146,6 +154,9 @@ static int LoadShaderInPlace( struct Shader * ret )
 		goto cancel_with_program;
 	}
 
+	free( VertexText );
+	free( FragmentText );
+
 	return 0; //Happy!
 
 cancel_with_program:
@@ -217,6 +228,8 @@ void ApplyShader( struct Shader * shader, struct UniformMatch * m )
 {
 	glUseProgramObjectARB( shader->program );
 
+	CurrentShader = shader;
+
 	while( m )
 	{
 		int place = glGetUniformLocationARB( shader->program, m->name );
@@ -261,6 +274,7 @@ void ApplyShader( struct Shader * shader, struct UniformMatch * m )
 
 void CancelShader( struct Shader * s )
 {
+	CurrentShader = 0;
 	glUseProgramObjectARB( 0 );
 }
 
@@ -413,7 +427,7 @@ int ReadTextureFromFile( struct Texture * t, const char * filename )
 		ps = 3;
 		t->format = TTRGB;
 	}
-	printf( "STRIDE: %d\n", ps );
+
 	t->rawdata = malloc( ps * width * height );
 
 	int x, y;
@@ -765,6 +779,21 @@ void UpdateDataInOpenGL( struct Texture * t )
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 }
 
+
+void ChangeTextureFilter( struct Texture * t, int linear )
+{
+	if( linear )
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	}
+	else
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	}
+}
+
 void ActivateTexture( struct Texture * t )
 {
 	glEnable( t->type );
@@ -778,24 +807,17 @@ void DeactivateTexture( struct Texture * t )
 	glBindTexture(t->type, 0 );
 }
 
+void DestroyTexture( struct Texture * t )
+{
+	glDeleteTextures( 1, &t->texture );
+	if( t->rawdata ) free( t->rawdata );
+	free( t->rawdata );
+}
 
 
 
 
 //RF BUFFERS
-
-/*
-struct RFBuffer
-{
-	int width, height;
-	int use_depth_buffer;
-
-	TextureType mtt;
-
-	GLuint renderbuffer;
-	GLuint outputbuffer;
-	int outextures;
-};*/
 
 struct RFBuffer * MakeRFBuffer( int use_depth_buffer, enum TextureType type )
 {
@@ -832,8 +854,8 @@ int RFBufferGo( struct RFBuffer *rb, int width, int height, int texturecount, st
 
 	if( rb->use_depth_buffer )
 	{
-		glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, rb->renderbuffer );
-		glRenderbufferStorageEXT( GL_RENDERBUFFER_EXT, GL_DEPTH_COMPONENT24, width, height );
+		glBindRenderbuffer( GL_RENDERBUFFER, rb->renderbuffer );
+		glRenderbufferStorage( GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, width, height );
 	}
 
 	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, rb->outputbuffer );
@@ -843,6 +865,7 @@ int RFBufferGo( struct RFBuffer *rb, int width, int height, int texturecount, st
 		glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + i, 
 			GL_TEXTURE_2D, t->texture, 0 );
 	}
+
 	if( rb->use_depth_buffer )
 		glFramebufferRenderbufferEXT( GL_FRAMEBUFFER_EXT, 
 			GL_DEPTH_ATTACHMENT_EXT, GL_RENDERBUFFER_EXT, rb->renderbuffer );
@@ -889,6 +912,7 @@ int RFBufferGo( struct RFBuffer *rb, int width, int height, int texturecount, st
 void RFBufferDone( struct RFBuffer *rb, int newwidth, int newheight )
 {
 	unsigned i;
+
 	for( i = 0; i < rb->outextures; i++ )
 	{
 		glFramebufferTexture2DEXT( GL_FRAMEBUFFER_EXT, GL_COLOR_ATTACHMENT0_EXT + i, 
@@ -897,8 +921,10 @@ void RFBufferDone( struct RFBuffer *rb, int newwidth, int newheight )
 		glActiveTextureARB( GL_TEXTURE0_ARB + i );
 		glDisable( GL_TEXTURE_2D );
 	}
+
 	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
 	glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
+
 	glViewport( 0, 0, newwidth, newheight );
 }
 
@@ -908,4 +934,231 @@ void DestroyRFBuffer( struct RFBuffer *rb )
 		glDeleteRenderbuffersEXT( 1, &rb->renderbuffer );
 	glDeleteFramebuffersEXT( 1, &rb->outputbuffer );
 }
+
+
+
+
+
+//VBOs, etc.
+
+
+struct VertexData * VertexDataCreate()
+{
+	struct VertexData * vd = malloc( sizeof( struct VertexData ) );
+	vd->vertexcount = 0;
+	vd->stride = 1;
+	vd->vbo = 0;
+	return vd;
+}
+
+void UpdateVertexData( struct VertexData * vd, float * Verts, int iNumVerts, int iStride )
+{
+	vd->stride = iStride;
+
+	if( !vd->vbo )
+	{
+		if( FreeVBOHead != -1 )
+			vd->vbo = FreeVBOs[FreeVBOHead--];
+		else
+			glGenBuffersARB( 1, &vd->vbo );
+	}
+
+	if( !Verts )
+	{
+		glBindBufferARB( GL_PIXEL_PACK_BUFFER_ARB, vd->vbo );
+		glBufferDataARB( GL_PIXEL_PACK_BUFFER_ARB, iNumVerts*4 * sizeof( float ), 0, GL_STREAM_COPY );
+		glBindBufferARB( GL_PIXEL_PACK_BUFFER_ARB, 0 );
+		//glBufferDataARB( GL_ARRAY_BUFFER_ARB, iNumVerts * iStride*4, 0, GL_DYNAMIC_DRAW );
+	}
+	else
+	{
+		glBindBufferARB( GL_ARRAY_BUFFER_ARB, vd->vbo  );
+		glBufferDataARB( GL_ARRAY_BUFFER_ARB, iNumVerts * iStride * sizeof( float ), Verts, GL_STATIC_DRAW_ARB );
+		glBindBufferARB( GL_ARRAY_BUFFER_ARB, 0 );
+	}
+}
+
+void DestroyVertexData( struct VertexData * vd )
+{
+	if( FreeVBOHead+1 < MAX_STORAGE )
+		FreeVBOs[++FreeVBOHead] = vd->vbo;
+	else
+		glDeleteBuffersARB( 1, &vd->vbo );
+	free( vd );
+}
+
+
+struct IndexData * IndexDataCreate()
+{
+	struct IndexData * ret = malloc( sizeof( struct IndexData ) );
+	ret->indexcount = 0;
+	ret->indexdata = 0;
+}
+
+void UpdateIndexData( struct IndexData * id, int indexcount, int * data )
+{
+	int i;
+	id->indexcount = indexcount;
+	if( id->indexdata ) free( id->indexdata );
+	id->indexdata = malloc( sizeof( GLuint ) * indexcount );
+	for( i = 0; i < indexcount; i++ )
+		id->indexdata[i] = data[i];
+}
+
+void DestroyIndexData( struct IndexData * id )
+{
+	if( id )
+	{
+		if( id->indexdata )
+			free( id->indexdata );
+		free( id );
+	}
+}
+
+
+
+
+
+
+struct GPUGeometry * CreateGeometry( struct IndexData * indices, int vertexcount, struct VertexData ** verts, char ** names, int unique, GLint mode )
+{
+	int i, j;
+	struct GPUGeometry * ret = malloc( sizeof( struct GPUGeometry ) );
+	ret->indices = indices;
+	ret->vertexcount = vertexcount;
+	ret->vertexdatas = verts;
+	ret->uniquedata = unique;
+	ret->names = malloc( sizeof( const char *) * vertexcount );
+	ret->names[0] = 0;
+	ret->mode = mode;
+	memset( &ret->textures[0], 0, sizeof( ret->textures ) );
+	memset( &ret->todelete[0], 0, sizeof( ret->todelete ) );
+	for( i = 1; i < vertexcount; i++ )
+	{
+		ret->names[i] = strdup( names[i] );
+	}
+
+	return ret;
+}
+
+void RenderGPUGeometry( struct GPUGeometry * g )
+{
+	struct VertexData ** vd  = g->vertexdatas;
+	char ** names = g->names;
+	int NumVertexSets = g->vertexcount;
+	struct IndexData * id = g->indices;
+
+	int i;
+	int tcarrayset = 0;
+	int colorarrayset = 0;
+
+	//Can't render.
+	if( !vd[0] ) return;
+	if( !(vd[0]->vbo) ) return;
+
+	for( i = 0; i < MAX_TEXTURES; i++ )
+	{
+		if( g->textures[i] )
+		{
+			ActivateTexture( g->textures[i] );
+		}
+	}
+
+	for( i = 1; i < NumVertexSets; ++i )
+	{
+		const char * name = names[i];
+
+		if( !vd[i] ) continue;
+		if( !vd[i]->vbo ) continue;
+
+		glBindBufferARB( GL_ARRAY_BUFFER_ARB, vd[i]->vbo );
+
+		if( strcmp( name, "texture" ) == 0 )
+		{
+		    glEnableClientState( GL_TEXTURE_COORD_ARRAY );
+			glTexCoordPointer( vd[i]->stride, GL_FLOAT, 0, 0 );
+			tcarrayset = 1;
+		}
+		else if( strcmp( name, "color" ) == 0 )
+		{
+		    glEnableClientState( GL_COLOR_ARRAY );
+			glColorPointer( vd[i]->stride, GL_FLOAT, 0, 0 );
+			colorarrayset = 1;
+		}
+		else if( CurrentShader )
+		{
+			int iTexPosID = glGetAttribLocationARB( CurrentShader->program, name );
+			glEnableVertexAttribArrayARB( iTexPosID );
+			glVertexAttribPointerARB( iTexPosID, vd[i]->stride, GL_FLOAT, 0, 0, 0 );
+		}
+	}
+
+	glBindBufferARB( GL_ARRAY_BUFFER_ARB, vd[0]->vbo );
+	glVertexPointer( vd[0]->stride, GL_FLOAT, 0, 0 );
+
+	glEnableClientState( GL_VERTEX_ARRAY );
+	glDrawElements( g->mode, id->indexcount, GL_UNSIGNED_INT, id->indexdata );
+	glDisableClientState( GL_VERTEX_ARRAY );
+
+	if( tcarrayset )
+	{
+	    glDisableClientState( GL_TEXTURE_COORD_ARRAY );
+	}
+
+	if( colorarrayset )
+	{
+	    glDisableClientState( GL_COLOR_ARRAY );
+	}
+
+	for( i = 0; i < MAX_TEXTURES; i++ )
+	{
+		if( g->textures[i] )
+		{
+			DeactivateTexture( g->textures[i] );
+		}
+	}
+
+}
+
+void AttachTextureToGeometry( struct GPUGeometry * g, struct Texture * texture, int place, int take_ownership_of )
+{
+	g->textures[place] = texture;
+	g->todelete[place] = take_ownership_of;
+}
+
+void DestroyGPUGeometry( struct GPUGeometry * g )
+{
+	int i;
+	for( i = 1; i < g->vertexcount; i++ )
+	{
+		free( g->names[i] );
+	}
+	free( g->names );
+
+	if( g->uniquedata )
+	{
+		DestroyIndexData( g->indices );
+		for( i = 0; i < g->vertexcount; i++ )
+		{
+			DestroyVertexData( g->vertexdatas[i] );
+		}
+	}
+
+	for( i = 0; i < MAX_TEXTURES; i++ )
+	{
+		if( g->todelete[i] && g->textures[i] )
+		{
+			DestroyTexture( g->textures[i] );
+		}
+	}
+
+	free( g );
+}
+
+
+
+
+
+
+
 

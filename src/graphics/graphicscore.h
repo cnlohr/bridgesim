@@ -6,6 +6,7 @@
 
 #define USE_PNG
 #define USE_JPG
+#define USE_IBO
 
 #define MAX_TEXTURES 16
 
@@ -106,7 +107,11 @@ struct VertexData
 struct IndexData
 {
 	int indexcount;
+#ifdef USE_IBO
+	GLuint ido;
+#else
 	GLuint * indexdata;
+#endif
 };
 
 struct GPUGeometry
@@ -150,7 +155,9 @@ void DestroyGPUGeometry( struct GPUGeometry * g );
 
 //TODO: Shaders: Global parameters, i.e. for size-of-textures?
 //TODO: Model loading
-//TODO: Use index buffers
+
+
+
 
 #endif
 

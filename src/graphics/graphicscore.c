@@ -28,8 +28,8 @@
 #define MAX_STORAGE 8192
 
 static struct Shader * CurrentShader;
-static GLuint FreeVBOs[MAX_STORAGE];
-static int FreeVBOHead = -1;
+static GLuint FreeBOs[MAX_STORAGE];
+static int FreeBOHead = -1;
 
 
 
@@ -957,8 +957,8 @@ void UpdateVertexData( struct VertexData * vd, float * Verts, int iNumVerts, int
 
 	if( !vd->vbo )
 	{
-		if( FreeVBOHead != -1 )
-			vd->vbo = FreeVBOs[FreeVBOHead--];
+		if( FreeBOHead != -1 )
+			vd->vbo = FreeBOs[FreeBOHead--];
 		else
 			glGenBuffersARB( 1, &vd->vbo );
 	}
@@ -980,8 +980,8 @@ void UpdateVertexData( struct VertexData * vd, float * Verts, int iNumVerts, int
 
 void DestroyVertexData( struct VertexData * vd )
 {
-	if( FreeVBOHead+1 < MAX_STORAGE )
-		FreeVBOs[++FreeVBOHead] = vd->vbo;
+	if( FreeBOHead+1 < MAX_STORAGE )
+		FreeBOs[++FreeBOHead] = vd->vbo;
 	else
 		glDeleteBuffersARB( 1, &vd->vbo );
 	free( vd );
@@ -992,25 +992,57 @@ struct IndexData * IndexDataCreate()
 {
 	struct IndexData * ret = malloc( sizeof( struct IndexData ) );
 	ret->indexcount = 0;
+#ifdef USE_IBO
+	ret->ido = 0;
+#else
 	ret->indexdata = 0;
+#endif
 }
 
 void UpdateIndexData( struct IndexData * id, int indexcount, int * data )
 {
 	int i;
+
 	id->indexcount = indexcount;
+#ifdef USE_IBO
+	if( !id->ido )
+	{
+		if( FreeBOHead != -1 )
+			id->ido = FreeBOs[FreeBOHead--];
+		else
+			glGenBuffersARB( 1, &id->ido );
+	}
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id->ido);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexcount*sizeof(int), data, GL_STATIC_DRAW);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+#else
+
+
 	if( id->indexdata ) free( id->indexdata );
 	id->indexdata = malloc( sizeof( GLuint ) * indexcount );
 	for( i = 0; i < indexcount; i++ )
 		id->indexdata[i] = data[i];
+#endif
+
 }
 
 void DestroyIndexData( struct IndexData * id )
 {
 	if( id )
 	{
+#ifdef USE_IBO
+		if( id->ido )
+		{
+			if( FreeBOHead+1 < MAX_STORAGE )
+				FreeBOs[++FreeBOHead] = id->ido;
+			else
+				glDeleteBuffersARB( 1, &id->ido );
+		}
+#else
 		if( id->indexdata )
 			free( id->indexdata );
+#endif
 		free( id );
 	}
 }
@@ -1050,6 +1082,7 @@ void RenderGPUGeometry( struct GPUGeometry * g )
 
 	int i;
 	int tcarrayset = 0;
+	int normalarrayset = 0;
 	int colorarrayset = 0;
 
 	//Can't render.
@@ -1085,6 +1118,12 @@ void RenderGPUGeometry( struct GPUGeometry * g )
 			glColorPointer( vd[i]->stride, GL_FLOAT, 0, 0 );
 			colorarrayset = 1;
 		}
+		else if( strcmp( name, "normal" ) == 0 )
+		{
+		    glEnableClientState( GL_NORMAL_ARRAY );
+			glNormalPointer( GL_FLOAT, vd[i]->stride, 0 );
+			normalarrayset = 1;
+		}
 		else if( CurrentShader )
 		{
 			int iTexPosID = glGetAttribLocationARB( CurrentShader->program, name );
@@ -1096,9 +1135,16 @@ void RenderGPUGeometry( struct GPUGeometry * g )
 	glBindBufferARB( GL_ARRAY_BUFFER_ARB, vd[0]->vbo );
 	glVertexPointer( vd[0]->stride, GL_FLOAT, 0, 0 );
 
+#ifdef USE_IBO
+	glEnableClientState( GL_VERTEX_ARRAY );
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id->ido);
+	glDrawElements(GL_TRIANGLES, id->indexcount, GL_UNSIGNED_INT, 0);
+	glDisableClientState( GL_VERTEX_ARRAY );
+#else
 	glEnableClientState( GL_VERTEX_ARRAY );
 	glDrawElements( g->mode, id->indexcount, GL_UNSIGNED_INT, id->indexdata );
 	glDisableClientState( GL_VERTEX_ARRAY );
+#endif
 
 	if( tcarrayset )
 	{
@@ -1108,6 +1154,11 @@ void RenderGPUGeometry( struct GPUGeometry * g )
 	if( colorarrayset )
 	{
 	    glDisableClientState( GL_COLOR_ARRAY );
+	}
+
+	if( normalarrayset )
+	{
+		glDisableClientState( GL_NORMAL_ARRAY );
 	}
 
 	for( i = 0; i < MAX_TEXTURES; i++ )
@@ -1155,6 +1206,10 @@ void DestroyGPUGeometry( struct GPUGeometry * g )
 	free( g );
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+//// END OF STANDARD GRAPHICS CORE - BEGIN HIGH LEVEL FUNCTIONALITY ///////////
+///////////////////////////////////////////////////////////////////////////////
 
 
 

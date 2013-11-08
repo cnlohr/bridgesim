@@ -15,10 +15,10 @@ WINLDFLAGS32:=\
 MINGW32:=/usr/bin/i686-w64-mingw32-
 
 
-test : test.c graphicscore.c bitmapfont.c ../util/os_generic.c
+test : test.c graphicscore.c bitmapfont.c objreader.c ../util/os_generic.c
 	gcc $(CFLAGS) -o $@ $^ $(LINLDFLAGS)
 
-test32.exe : test.c graphicscore.c bitmapfont.c ../util/os_generic.c
+test32.exe : test.c graphicscore.c bitmapfont.c objreader.c ../util/os_generic.c
 	$(MINGW32)gcc $(CFLAGSWIN32) -o $@ $^ glew/glew-i586.a  $(WINLDFLAGS32) 
 
 

@@ -91,10 +91,11 @@ struct GPUGeometry * EmitGeometryFromFontString( struct BitmapFont * bf, const c
 	struct VertexData * vd; //Places
 	struct VertexData * tc; //Texture coords.
 	struct IndexData * id;
-	int slen, i;
+	int slen, i, actualchars;
 	int * indexdata;
 	float * verts;
 	float * tcs;
+	int line = 0;
 	float progressx = 0;
 
 	if( str == 0 || *str == 0 ) return 0;
@@ -105,8 +106,17 @@ struct GPUGeometry * EmitGeometryFromFontString( struct BitmapFont * bf, const c
 	verts = malloc( 4 * 2 * sizeof( float ) * slen );
 	tcs = malloc( 4 * 2 * sizeof( float ) * slen );
 
+	actualchars = 0;
+
 	for( i = 0; i < slen; i++ )
 	{
+		if( str[i] == '\n' )
+		{
+			line++;
+			progressx = 0;
+			continue;
+		}
+
 		struct MChar * mc = &bf->chars[(unsigned char)str[i]];
 		indexdata[i*6+0] = i * 4;
 		indexdata[i*6+1] = i * 4 + 1;
@@ -123,15 +133,16 @@ struct GPUGeometry * EmitGeometryFromFontString( struct BitmapFont * bf, const c
 
 
 		float minx = progressx;// + mc->bitmapleft/3.0f;
-		float miny = mc->bitmaptop;
+		float miny = mc->bitmaptop + line * bf->fontsize;
 		float maxx = minx + mc->iW;
-		float maxy = mc->bitmaptop - mc->lbitrows;
+		float maxy = mc->bitmaptop - mc->lbitrows + line * bf->fontsize;
 
 		verts[i*2*4+0] = minx; verts[i*2*4+1] = miny;
 		verts[i*2*4+2] = maxx; verts[i*2*4+3] = miny;
 		verts[i*2*4+4] = minx; verts[i*2*4+5] = maxy;
 		verts[i*2*4+6] = maxx; verts[i*2*4+7] = maxy;
 
+		actualchars++;
 		progressx += mc->iW + bf->A;
 	}
 
@@ -139,9 +150,9 @@ struct GPUGeometry * EmitGeometryFromFontString( struct BitmapFont * bf, const c
 	vd = VertexDataCreate();
 	tc = VertexDataCreate();
 	
-	UpdateIndexData( id, 6 * slen, indexdata );
-	UpdateVertexData( vd, verts, slen * 4, 2 );
-	UpdateVertexData( tc, tcs, slen * 4, 2 );
+	UpdateIndexData( id, 6 * actualchars, indexdata );
+	UpdateVertexData( vd, verts, actualchars * 4, 2 );
+	UpdateVertexData( tc, tcs, actualchars * 4, 2 );
 
 	free( indexdata );
 	free( verts );

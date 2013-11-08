@@ -10,6 +10,7 @@ float g_width, g_height;
 
 struct Shader * defshader;
 struct Shader * texcoords;
+struct Shader * textshader;
 struct UniformMatch * shaderprops;
 struct Texture * testtex;
 
@@ -24,6 +25,7 @@ struct BitmapFont * mbf;
 struct BitmapFont * captureitfont;
 struct GPUGeometry * helloworld = 0;
 struct GPUGeometry * bridgesim = 0;
+struct GPUGeometry * lottatext = 0;
 
 double ElapsedTime;
 double DeltaTime;
@@ -110,11 +112,17 @@ void display(void)
 	glutBitmapString( GLUT_BITMAP_9_BY_15, "(15,51)" );
 //	glutWireTeapot(1.0);
 
+
+
+
 	glLoadIdentity();
 	glTranslatef( 0., -6., -30 );
 	glColor4f( 1,1,0,1 );
-	glScalef( .05, .05, .05 );
+	glScalef( .07, .07, .07 );
+	CheckForNewerShader( textshader );
+	ApplyShader( textshader, shaderprops );
 	RenderGPUGeometry( helloworld );
+	CancelShader( textshader );
 	glColor4f( 1,1,1,1 );
 
 
@@ -177,25 +185,37 @@ void display(void)
 	glTranslatef( 0, 100, 0 );
 	glScalef( 0.1*g_width/250.0, 0.1*g_width/250.0, 0.0 );
 	glScalef(1, -1, 1);
-//	CheckForNewerShader( texcoords );
-//	ApplyShader( texcoords, shaderprops );
-
-
 	char stx[85];
 	sprintf( stx, "[BRIDGE SIM %4.2f]", ElapsedTime );
 	if( bridgesim ) DestroyGPUGeometry( bridgesim );
 	bridgesim = EmitGeometryFromFontString( captureitfont, stx );
+	CheckForNewerShader( textshader );
+	ApplyShader( textshader, shaderprops );
 	RenderGPUGeometry( bridgesim );
-
-//	CancelShader( texcoords );
-
+	CancelShader( textshader );
 	glPopMatrix();
+
+
+
+/*
+	glPushMatrix();
+	glTranslatef( 0, 20, 0 );
+	glScalef( 0.005*g_width/250.0, 0.005*g_width/250.0, 0.0 );
+	CheckForNewerShader( texcoords );
+	ApplyShader( texcoords, shaderprops );
+	RenderGPUGeometry( lottatext );
+	RenderGPUGeometry( lottatext );
+	CancelShader( texcoords );
+	glPopMatrix();
+
+*/
 
 	glFlush();
 }
 
 int main(int argc, char **argv)
 {
+	int i;
 	glutInit( &argc, argv );
 	glutCreateWindow( "Test" );
 	if( glewInit() != GLEW_OK )
@@ -208,6 +228,7 @@ int main(int argc, char **argv)
 
 	defshader = CreateShader( "../../assets/shaders/default" );
 	texcoords = CreateShader( "../../assets/shaders/texcoords" );
+	textshader = CreateShader( "../../assets/shaders/text" );
 	SetupShaderProps();
 
 	testtex = CreateTexture();
@@ -220,6 +241,20 @@ int main(int argc, char **argv)
 	mbf = LoadBitmapFontByName( "../../assets/fonts/OldSansBlack.hgfont" );
 	captureitfont = LoadBitmapFontByName( "../../assets/fonts/CaptureIt.hgfont" );
 	helloworld = EmitGeometryFromFontString( mbf, "Hello, world." );
+
+
+	char stx[65536];
+	for( i = 0; i < 65535; i++ )
+	{
+		if( (i % 350) == 0 )
+			stx[i] = '\n';
+		else
+			stx[i] = (rand()%95) + 32;
+
+	}
+	stx[i] = 0;
+	lottatext = EmitGeometryFromFontString( captureitfont, stx );
+	RenderGPUGeometry( lottatext );
 
 	glutDisplayFunc( display );
 	glutReshapeFunc( reshape );

@@ -4,10 +4,12 @@
 #include "graphicscore.h"
 #include "bitmapfont.h"
 #include <os_generic.h>
+#include "objreader.h"
 #include <math.h>
 
 float g_width, g_height;
 
+struct Shader * modelshader;
 struct Shader * defshader;
 struct Shader * texcoords;
 struct Shader * textshader;
@@ -17,6 +19,7 @@ struct Texture * testtex;
 float Ambient[4] = { .1, .1, .1, 1 };
 float Emission[4] = { 0, 0, 0, 1 };
 float TexSlot = 0;
+float TexSlot1 = 0;
 double StartTime;
 
 struct RFBuffer * myrb;
@@ -26,6 +29,9 @@ struct BitmapFont * captureitfont;
 struct GPUGeometry * helloworld = 0;
 struct GPUGeometry * bridgesim = 0;
 struct GPUGeometry * lottatext = 0;
+
+
+struct GPUGeometry * modelgeo;
 
 double ElapsedTime;
 double DeltaTime;
@@ -38,6 +44,7 @@ void SetupShaderProps()
 	shaderprops = UniformMatchMake( "AmbientColor", Ambient, 0, 4, 0 );
 	shaderprops = UniformMatchMake( "EmissionColor", Emission, 0, 4, shaderprops );
 	shaderprops = UniformMatchMake( "tex0", &TexSlot, 1, 0, shaderprops );
+	shaderprops = UniformMatchMake( "tex1", &TexSlot1, 1, 0, shaderprops );
 }
 
 void idle()
@@ -74,14 +81,15 @@ void display(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable (GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable( GL_DEPTH_TEST );
+	glDepthFunc(GL_LESS);
 
 
-	RFBufferGo( myrb, 100, 100, 1, &torender, 0 );
+	RFBufferGo( myrb, 100, 100, 1, &torender, 1 );
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective( 45.0, 1.0, 0.1f, 500.0 );
-	glDepthFunc(GL_LESS);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
@@ -91,7 +99,7 @@ void display(void)
 	glRasterPos2f(1.5, .5);
 	glutBitmapString( GLUT_BITMAP_9_BY_15, "(15,51)" );
 
-//	glutWireTeapot(1.0);
+	glutWireTeapot(1.0);
 
 
 	RFBufferDone( myrb, g_width, g_height );
@@ -101,18 +109,17 @@ void display(void)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective( 45.0, (GLfloat)(g_width)/(GLfloat)(g_height), 0.1f, 500.0 );
-	glDepthFunc(GL_LESS);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	glRotatef( ElapsedTime * 100, 0, 0, 1 );
 	glTranslatef( 0., 0., -10 );
-	glRasterPos2f(1.5, .5);
+	glRotatef( ElapsedTime * 100, 0, 1, 0 );
 	glColor3f( 1,1,1 );
-	glutBitmapString( GLUT_BITMAP_9_BY_15, "(15,51)" );
-//	glutWireTeapot(1.0);
 
-
+	CheckForNewerShader( modelshader );
+	ApplyShader( modelshader, shaderprops );
+	RenderGPUGeometry( modelgeo );
+	CancelShader( modelshader );
 
 
 	glLoadIdentity();
@@ -162,9 +169,6 @@ void display(void)
 	DeactivateTexture( testtex);
 
 	CancelShader( defshader);
-
-
-
 
 	ActivateTexture( torender );
 	glScalef( 2, 2, 1 );
@@ -229,6 +233,7 @@ int main(int argc, char **argv)
 	defshader = CreateShader( "../../assets/shaders/default" );
 	texcoords = CreateShader( "../../assets/shaders/texcoords" );
 	textshader = CreateShader( "../../assets/shaders/text" );
+	modelshader = CreateShader( "../../assets/shaders/model" );
 	SetupShaderProps();
 
 	testtex = CreateTexture();
@@ -241,6 +246,10 @@ int main(int argc, char **argv)
 	mbf = LoadBitmapFontByName( "../../assets/fonts/OldSansBlack.hgfont" );
 	captureitfont = LoadBitmapFontByName( "../../assets/fonts/CaptureIt.hgfont" );
 	helloworld = EmitGeometryFromFontString( mbf, "Hello, world." );
+
+
+	struct OBJFile * model = OpenOBJ( "../../assets/models/ball.obj", 1 );
+	modelgeo = model->Objects[0]->geometry;
 
 
 	char stx[65536];

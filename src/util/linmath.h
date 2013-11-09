@@ -1,6 +1,9 @@
 #ifndef _LINMATH_H
 #define _LINMATH_H
 
+//Yes, I know it's kind of arbitrary.
+#define DEFAULT_EPSILON 0.001
+
 
 //NOTE: Inputs may never be output with cross product.
 void cross3d( float * out, const float * a, const float * b );

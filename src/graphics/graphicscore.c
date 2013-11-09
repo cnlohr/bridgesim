@@ -1121,7 +1121,7 @@ void RenderGPUGeometry( struct GPUGeometry * g )
 		else if( strcmp( name, "normal" ) == 0 )
 		{
 		    glEnableClientState( GL_NORMAL_ARRAY );
-			glNormalPointer( GL_FLOAT, vd[i]->stride, 0 );
+			glNormalPointer( GL_FLOAT, vd[i]->stride*4, 0 );
 			normalarrayset = 1;
 		}
 		else if( CurrentShader )

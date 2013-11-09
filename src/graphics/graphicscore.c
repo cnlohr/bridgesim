@@ -8,6 +8,22 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+double TotalTime;
+double DeltaTime;
+float RenderW;
+float RenderH;
+float ScreenW;
+float ScreenH;
+
+#define MAX_STORAGE 8192
+
+static struct Shader * CurrentShader;
+static GLuint FreeBOs[MAX_STORAGE];
+static int FreeBOHead = -1;
+
+
+
 #ifdef WIN32
 
 #include <windows.h>
@@ -24,12 +40,6 @@
 #include <jpeglib.h>
 #endif
 #endif
-
-#define MAX_STORAGE 8192
-
-static struct Shader * CurrentShader;
-static GLuint FreeBOs[MAX_STORAGE];
-static int FreeBOHead = -1;
 
 
 
@@ -848,6 +858,9 @@ int RFBufferGo( struct RFBuffer *rb, int width, int height, int texturecount, st
 		}
 	}
 
+	RenderW = width;
+	RenderH = height;
+
 	rb->width = width;
 	rb->height = height;
 	rb->outextures = texturecount;
@@ -906,10 +919,11 @@ int RFBufferGo( struct RFBuffer *rb, int width, int height, int texturecount, st
 	if( do_clear )
 		glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
+
 	return 0;
 }
 
-void RFBufferDone( struct RFBuffer *rb, int newwidth, int newheight )
+void RFBufferDone( struct RFBuffer *rb )
 {
 	unsigned i;
 
@@ -925,7 +939,10 @@ void RFBufferDone( struct RFBuffer *rb, int newwidth, int newheight )
 	glBindFramebufferEXT( GL_FRAMEBUFFER_EXT, 0 );
 	glBindRenderbufferEXT( GL_RENDERBUFFER_EXT, 0 );
 
-	glViewport( 0, 0, newwidth, newheight );
+	RenderW = ScreenW;
+	RenderH = ScreenH;
+
+	glViewport( 0, 0, ScreenW, ScreenH );
 }
 
 void DestroyRFBuffer( struct RFBuffer *rb )
@@ -1063,6 +1080,13 @@ struct GPUGeometry * CreateGeometry( struct IndexData * indices, int vertexcount
 	ret->names = malloc( sizeof( const char *) * vertexcount );
 	ret->names[0] = 0;
 	ret->mode = mode;
+	ret->maxs[0] = -10000;
+	ret->maxs[1] = -10000;
+	ret->maxs[2] = -10000;
+	ret->mins[0] = 10000;
+	ret->mins[1] = 10000;
+	ret->mins[2] = 10000;
+
 	memset( &ret->textures[0], 0, sizeof( ret->textures ) );
 	memset( &ret->todelete[0], 0, sizeof( ret->todelete ) );
 	for( i = 1; i < vertexcount; i++ )

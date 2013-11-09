@@ -7,10 +7,10 @@
 #include "objreader.h"
 #include <math.h>
 #include "commonassets.h"
+#include "guibase.h"
 #include "button.h"
 #include <string.h>
 
-float g_width, g_height;
 
 double ElapsedTime;
 double DeltaTime, StartTime;
@@ -19,7 +19,7 @@ int framecountsincefps;
 int fpscount;
 
 struct GPUGeometry * helloworld;
-struct Button * testbutton;
+struct GUIWindow * guiwindow;
 
 void idle()
 {
@@ -28,8 +28,8 @@ void idle()
 
 void reshape(int w, int h)
 {
-	g_width = w;
-	g_height = h;
+	ScreenW = w;
+	ScreenH = h;
 
 	glViewport(0, 0, w, h);
 
@@ -59,9 +59,11 @@ void display(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable( GL_DEPTH_TEST );
 	glDepthFunc(GL_LESS);
-	RenderW = g_width;
-	RenderH = g_height;
+	RenderW = ScreenW;
+	RenderH = ScreenH;
 
+
+	WindowRender( guiwindow );
 
 /*
 	RFBufferGo( myrb, 100, 100, 1, &torender, 1 );
@@ -89,10 +91,10 @@ void display(void)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(0, g_width, 0, g_height, -1, 1);
+	glOrtho(0, ScreenW, 0, ScreenH, -1, 1);
 	glDepthFunc(GL_ALWAYS);
 	glScalef(1, -1, 1);
-	glTranslatef(0, -g_height, 0);
+	glTranslatef(0, -ScreenH, 0);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -103,22 +105,22 @@ void display(void)
 	glutBitmapString( GLUT_BITMAP_9_BY_15, st );
 
 
-
+	ActivateTexture( guiwindow->torender );
+	glTranslatef( 0, 200, 0 );
 	glBegin(GL_QUADS);
 	glTexCoord2f(0.0, 0.0);
 	glVertex3f(0.0, 0.0, 0.0);
 	glTexCoord2f(1.0, 0.0);
-	glVertex3f(100.0, 0.0, 0.0);
+	glVertex3f(300.0, 0.0, 0.0);
 	glTexCoord2f(1.0, 1.0);
-	glVertex3f(100.0, 100.0, 0.0);
+	glVertex3f(300.0, 300.0, 0.0);
 	glTexCoord2f(0.0, 1.0);
-	glVertex3f(0.0, 100.0, 0.0);
+	glVertex3f(0.0, 300.0, 0.0);
 	glEnd();
+	DeactivateTexture( guiwindow->torender );
 
 
 	glLoadIdentity();
-	glScalef( 1.5, 1.5, 1.5 );
-	RenderButton( testbutton );
 
 	glFlush();
 }
@@ -138,8 +140,11 @@ int main(int argc, char **argv)
 
 	SetupCommonAssets();
 
-	testbutton = CreateButton();
-	testbutton->text = strdup( "Hello" );
+	guiwindow = CreateGUIWindow( );
+	guiwindow->width = 300;
+	guiwindow->height = 300;
+	struct GUIBase * b;
+	WindowAddElement( guiwindow, b = CreateButton( guiwindow, "Hi!" ) );
 
 	glutDisplayFunc( display );
 	glutReshapeFunc( reshape );

@@ -7,8 +7,6 @@
 #include "objreader.h"
 #include <math.h>
 
-float g_width, g_height;
-
 struct Shader * modelshader;
 struct Shader * defshader;
 struct Shader * texcoords;
@@ -54,8 +52,8 @@ void idle()
 
 void reshape(int w, int h)
 {
-	g_width = w;
-	g_height = h;
+	ScreenW = w;
+	ScreenH = h;
 
 	glViewport(0, 0, w, h);
 
@@ -102,13 +100,13 @@ void display(void)
 	glutWireTeapot(1.0);
 
 
-	RFBufferDone( myrb, g_width, g_height );
+	RFBufferDone( myrb, );
 
 
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective( 45.0, (GLfloat)(g_width)/(GLfloat)(g_height), 0.1f, 500.0 );
+	gluPerspective( 45.0, (GLfloat)(ScreenW)/(GLfloat)(ScreenH), 0.1f, 500.0 );
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
@@ -136,7 +134,7 @@ void display(void)
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho(0, g_width, 0, g_height, -1, 1);
+	glOrtho(0, ScreenW, 0, ScreenH, -1, 1);
 	glDepthFunc(GL_ALWAYS);
 	glScalef(1, -1, 1);
 	glTranslatef(0, -g_height, 0);
@@ -187,7 +185,7 @@ void display(void)
 
 	glPushMatrix();
 	glTranslatef( 0, 100, 0 );
-	glScalef( 0.1*g_width/250.0, 0.1*g_width/250.0, 0.0 );
+	glScalef( 0.1*ScreenW/250.0, 0.1*ScreenH/250.0, 0.0 );
 	glScalef(1, -1, 1);
 	char stx[85];
 	sprintf( stx, "[BRIDGE SIM %4.2f]", ElapsedTime );

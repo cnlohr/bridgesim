@@ -123,11 +123,6 @@ void CommitObject( struct TempObject * o, struct OBJFile * f )
 	if( OutputVerts && OutputNorms && OutputTexs )
 		OutputTangents = CalculateTangentSpace( o->CTriCount, OutputVertCount, OutputIndices, OutputVerts, OutputNorms, OutputTexs );
 
-	if( OutputTangents )
-	{
-		printf( "%f %f %f %f\n", OutputTangents[0], OutputTangents[1], OutputTangents[2], OutputTangents[3] );
-	}
-
 	int vertentrycount = 1;
 	struct VertexData ** vertslist = malloc( sizeof( struct VertexData * ) * 4 );
 	char * names[4];
@@ -177,6 +172,8 @@ void CommitObject( struct TempObject * o, struct OBJFile * f )
 
 
 	oo->geometry = CreateGeometry( indices, vertentrycount, vertslist, names, 1, GL_TRIANGLES );
+	copy3d( oo->geometry->maxs, oo->maxs );
+	copy3d( oo->geometry->mins, oo->mins );
 
 	for( i = 1; i < vertentrycount; i++ )
 	{

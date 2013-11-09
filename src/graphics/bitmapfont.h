@@ -26,7 +26,9 @@ struct BitmapFont
 
 struct BitmapFont * LoadBitmapFontByName( const char * fontpath );
 
-struct GPUGeometry * EmitGeometryFromFontString( struct BitmapFont * bf, const char * str );
+#define TEXTFLIPY 1
+
+struct GPUGeometry * EmitGeometryFromFontString( struct BitmapFont * bf, const char * str, int flags );
 
 
 #endif

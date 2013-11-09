@@ -10,6 +10,13 @@
 
 #define MAX_TEXTURES 16
 
+extern double TotalTime;
+extern double DeltaTime;
+extern float RenderW;
+extern float RenderH;
+extern float ScreenW;
+extern float ScreenH;
+
 struct Shader
 {
 	GLuint vertex;
@@ -87,7 +94,7 @@ struct RFBuffer
 
 struct RFBuffer * MakeRFBuffer( int use_depth_buffer, enum TextureType type );
 int RFBufferGo( struct RFBuffer *rb, int width, int height, int texturecount, struct Texture ** textures, int do_clear );
-void RFBufferDone( struct RFBuffer *rb, int newwidth, int newheight );
+void RFBufferDone( struct RFBuffer *rb );
 void DestroyRFBuffer( struct RFBuffer *rb );
 
 
@@ -128,6 +135,8 @@ struct GPUGeometry
 	int uniquedata;
 
 	GLint mode;
+	float maxs[3];
+	float mins[3];
 };
 
 struct VertexData * VertexDataCreate();

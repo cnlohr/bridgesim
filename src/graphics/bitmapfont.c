@@ -79,7 +79,7 @@ cancel:
 	return 0;
 }
 
-struct GPUGeometry * EmitGeometryFromFontString( struct BitmapFont * bf, const char * str )
+struct GPUGeometry * EmitGeometryFromFontString( struct BitmapFont * bf, const char * str, int flags )
 {
 	if( !bf )
 	{
@@ -97,6 +97,11 @@ struct GPUGeometry * EmitGeometryFromFontString( struct BitmapFont * bf, const c
 	float * tcs;
 	int line = 0;
 	float progressx = 0;
+
+	float gminx = 1e20;
+	float gminy = 1e20;
+	float gmaxx = -1e20;
+	float gmaxy = -1e20;
 
 	if( str == 0 || *str == 0 ) return 0;
 	slen = strlen( str );
@@ -137,10 +142,21 @@ struct GPUGeometry * EmitGeometryFromFontString( struct BitmapFont * bf, const c
 		float maxx = minx + mc->iW;
 		float maxy = mc->bitmaptop - mc->lbitrows + line * bf->fontsize;
 
+		if( flags & TEXTFLIPY )
+		{
+			maxy = bf->fontsize - maxy;
+			miny = bf->fontsize - miny;
+		}
+
 		verts[i*2*4+0] = minx; verts[i*2*4+1] = miny;
 		verts[i*2*4+2] = maxx; verts[i*2*4+3] = miny;
 		verts[i*2*4+4] = minx; verts[i*2*4+5] = maxy;
 		verts[i*2*4+6] = maxx; verts[i*2*4+7] = maxy;
+
+		if( minx < gminx ) gminx = minx;
+		if( miny < gminy ) gminy = miny;
+		if( maxx > gmaxx ) gmaxx = maxx;
+		if( maxy > gmaxy ) gmaxy = maxy;
 
 		actualchars++;
 		progressx += mc->iW + bf->A;
@@ -166,6 +182,13 @@ struct GPUGeometry * EmitGeometryFromFontString( struct BitmapFont * bf, const c
 	names[1] = strdup( "texture" );
 
 	ret = CreateGeometry( id, 2, vertslist, names, 1, GL_TRIANGLES );
+	ret->mins[0] = gminx;
+	ret->mins[1] = gminy;
+	ret->mins[2] = 0;
+	ret->maxs[0] = gmaxx;
+	ret->maxs[1] = gmaxy;
+	ret->maxs[2] = 0;
+
 	AttachTextureToGeometry( ret, bf->fonttex, 0, 0 );
 
 	free( names[1] );

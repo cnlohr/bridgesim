@@ -1,7 +1,14 @@
 all : test 
 #test32.exe
 
-SRCS:=test.c graphics/graphicscore.c graphics/bitmapfont.c graphics/objreader.c util/os_generic.c util/linmath.c util/3dutils.c commonassets.c gui/button.c
+SRCS:=test.c graphics/graphicscore.c graphics/bitmapfont.c graphics/objreader.c \
+	util/os_generic.c util/linmath.c util/3dutils.c commonassets.c \
+	gui/button.c gui/guibase.c
+
+OBJS:=test.o graphics/graphicscore.o graphics/bitmapfont.o graphics/objreader.o \
+	util/os_generic.o util/linmath.o util/3dutils.o commonassets.o \
+	gui/button.o gui/guibase.o
+
 
 CFLAGS:=-O0 -g -Iutil -Igraphics -Igui -I.
 CFLAGSWIN32:=$(CFLAGS)  -Ifreeglut  -m32  -Iglew -DGLEW_STATIC -Iutil -Igui -I.
@@ -18,11 +25,11 @@ WINLDFLAGS32:=\
 MINGW32:=/usr/bin/i686-w64-mingw32-
 
 
-test : $(SRCS)
+test : $(OBJS)
 	gcc $(CFLAGS) -o $@ $^ $(LINLDFLAGS)
 
-#test32.exe : test.c graphicscore.c bitmapfont.c objreader.c ../util/os_generic.c ../util/linmath.c ../util/3dutils.c
-#	$(MINGW32)gcc $(CFLAGSWIN32) -o $@ $^ glew/glew-i586.a  $(WINLDFLAGS32) 
+test32.exe : $(SRCS)
+	$(MINGW32)gcc $(CFLAGSWIN32) -o $@ $^ glew/glew-i586.a  $(WINLDFLAGS32) 
 
 
 clean :

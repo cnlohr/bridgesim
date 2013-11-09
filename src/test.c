@@ -12,8 +12,7 @@
 #include <string.h>
 
 
-double ElapsedTime;
-double DeltaTime, StartTime;
+double StartTime;
 double LastFPSTime;
 int framecountsincefps;
 int fpscount;
@@ -38,11 +37,11 @@ void reshape(int w, int h)
 void display(void)
 {
 	static double LastTime;
-	ElapsedTime = OGGetAbsoluteTime() - StartTime;
-	DeltaTime = ElapsedTime - LastTime;
-	LastTime = ElapsedTime;
+	TotalTime = OGGetAbsoluteTime() - StartTime;
+	DeltaTime = TotalTime - LastTime;
+	LastTime = TotalTime;
 
-	if( LastFPSTime + 1 < ElapsedTime )
+	if( LastFPSTime + 1 < TotalTime )
 	{
 		LastFPSTime += 1;
 		fpscount = framecountsincefps;

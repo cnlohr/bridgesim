@@ -163,8 +163,10 @@ void WindowRender( struct GUIWindow * w  )
 	glLoadIdentity();
 	glOrtho(0, w->width, 0, w->height, -1, 1);
 	glDepthFunc(GL_ALWAYS);
-	glScalef(1, -1, 1);
-	glTranslatef(0, -w->height, 0);
+
+//Flip-y
+//	glScalef(1, -1, 1);
+//	glTranslatef(0, -w->height, 0);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();

@@ -22,6 +22,14 @@ float dot3d( const float * a, const float * b );
 int compare3d( const float * a, const float * b, float epsilon );
 
 void copy3d( float * out, const float * in );
+
+
+
+
+//Quaternion things...
+
+
+
 #endif
 
 

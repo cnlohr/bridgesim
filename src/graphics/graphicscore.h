@@ -167,6 +167,8 @@ void DestroyGPUGeometry( struct GPUGeometry * g );
 
 
 
+void DrawSquare( float x, float y, float w, float h );
+
 
 #endif
 

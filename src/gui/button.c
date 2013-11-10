@@ -10,7 +10,7 @@ struct GUIBase * CreateButton( struct GUIWindow * parent, const char * text )
 	ret->x = 100;
 	ret->y = 0;
 	ret->w = 100;
-	ret->h = 100;
+	ret->h = 30;
 	ret->color[0] = 1;
 	ret->color[1] = 1;
 	ret->color[2] = 0;
@@ -64,8 +64,8 @@ void ButtonRender( struct Button * b )
 	}
 
 
-	b->w = sin(TotalTime)*100+100;
-	b->h = cos(TotalTime)*100+100;
+//	b->w = sin(TotalTime)*100+100;
+//	b->h = cos(TotalTime)*100+100;
 
 	ApplyShader( ButtonShader, OverallUniforms );
 	glColor4fv( b->color );
@@ -91,14 +91,14 @@ void ButtonRender( struct Button * b )
 		float mx = b->geotext->maxs[0]-b->geotext->mins[0];
 		float my = b->geotext->maxs[1]-b->geotext->mins[1];
 
-		float scaleby = 32.0 / OldSansBlack->fontsize;
+		float scaleby = b->h / OldSansBlack->fontsize;
 
 		glTranslatef( b->x+(b->w-mx*scaleby)/2, b->y+(b->h-(my+32)*scaleby)/2, 0 );
 		glScalef( scaleby, scaleby, 0.0 );
 
-		ApplyShader( TextShader, OverallUniforms );
+//		ApplyShader( TextShader, OverallUniforms );
 		RenderGPUGeometry( b->geotext );
-		CancelShader( TextShader );
+//		CancelShader( TextShader );
 	}
 
 	glColor4f( 1,1,1,1 );

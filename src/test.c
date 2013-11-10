@@ -9,6 +9,7 @@
 #include "commonassets.h"
 #include "guibase.h"
 #include "button.h"
+#include "glutmain.h"
 #include <string.h>
 
 
@@ -20,36 +21,25 @@ int fpscount;
 struct GPUGeometry * helloworld;
 struct GUIWindow * guiwindow;
 
-void idle()
+void MouseMotion( double x, double y, int mask )
 {
-	glutPostRedisplay();
+	WindowHandleMouseMove( guiwindow, x, y, mask );
 }
 
-void reshape(int w, int h)
+void MouseClick( double x, double y, int button, int state )
 {
-	ScreenW = w;
-	ScreenH = h;
-
-	glViewport(0, 0, w, h);
-
+	WindowHandleMouseClick( guiwindow, x, y, button, state );
 }
 
-void display(void)
+void HandleKeyboard( int c, int down )
 {
-	static double LastTime;
-	TotalTime = OGGetAbsoluteTime() - StartTime;
-	DeltaTime = TotalTime - LastTime;
-	LastTime = TotalTime;
+	WindowHandleKeyboard( guiwindow, c, down );
+}
 
-	if( LastFPSTime + 1 < TotalTime )
-	{
-		LastFPSTime += 1;
-		fpscount = framecountsincefps;
-		printf( "FPS: %d\n", fpscount );
-		framecountsincefps = 0;
-	}
-	framecountsincefps++;
 
+
+void UpdatedDisplay(void)
+{
 	CheckCommonAssets();
 
 	glClearColor( .2, .2, .2, 0 );
@@ -58,35 +48,10 @@ void display(void)
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable( GL_DEPTH_TEST );
 	glDepthFunc(GL_LESS);
-	RenderW = ScreenW;
-	RenderH = ScreenH;
 
-
+	guiwindow->width = ScreenW;
+	guiwindow->height = ScreenH;
 	WindowRender( guiwindow );
-
-/*
-	RFBufferGo( myrb, 100, 100, 1, &torender, 1 );
-	RenderW = 100;
-	RenderH = 100;
-
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective( 45.0, 1.0, 0.1f, 500.0 );
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glRotatef( ElapsedTime * 100, 0, 0, 1 );
-	glTranslatef( 0., 0., -10 );
-	glColor3f( 1,1,1 );
-	glRasterPos2f(1.5, .5);
-	glutBitmapString( GLUT_BITMAP_9_BY_15, "(15,51)" );
-
-	glutWireTeapot(1.0);
-
-
-	RFBufferDone( myrb, g_width, g_height );
-*/
-
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -105,17 +70,7 @@ void display(void)
 
 
 	ActivateTexture( guiwindow->torender );
-	glTranslatef( 0, 200, 0 );
-	glBegin(GL_QUADS);
-	glTexCoord2f(0.0, 0.0);
-	glVertex3f(0.0, 0.0, 0.0);
-	glTexCoord2f(1.0, 0.0);
-	glVertex3f(300.0, 0.0, 0.0);
-	glTexCoord2f(1.0, 1.0);
-	glVertex3f(300.0, 300.0, 0.0);
-	glTexCoord2f(0.0, 1.0);
-	glVertex3f(0.0, 300.0, 0.0);
-	glEnd();
+	DrawSquare(0,0,ScreenW,ScreenH );
 	DeactivateTexture( guiwindow->torender );
 
 
@@ -126,16 +81,7 @@ void display(void)
 
 int main(int argc, char **argv)
 {
-	int i;
-	glutInit( &argc, argv );
-	glutCreateWindow( "Test" );
-	if( glewInit() != GLEW_OK )
-	{
-		fprintf( stderr, "Error: GLEW Fault.\n" );
-		return 0;
-	}
-
-	StartTime = OGGetAbsoluteTime();
+	StartGlutMain( argc, argv, "test", 640, 480 );
 
 	SetupCommonAssets();
 
@@ -145,11 +91,9 @@ int main(int argc, char **argv)
 	struct GUIBase * b;
 	WindowAddElement( guiwindow, b = CreateButton( guiwindow, "Hi!" ) );
 
-	glutDisplayFunc( display );
-	glutReshapeFunc( reshape );
-	glutIdleFunc( idle );
-	glutMainLoop();
-	return 0;
+	SetMouseWarpMode( 0 );
+
+	DoGlutLoop();
 }
 
 

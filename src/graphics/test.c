@@ -100,7 +100,7 @@ void display(void)
 	glutWireTeapot(1.0);
 
 
-	RFBufferDone( myrb, );
+	RFBufferDone( myrb );
 
 
 
@@ -137,7 +137,7 @@ void display(void)
 	glOrtho(0, ScreenW, 0, ScreenH, -1, 1);
 	glDepthFunc(GL_ALWAYS);
 	glScalef(1, -1, 1);
-	glTranslatef(0, -g_height, 0);
+	glTranslatef(0, -ScreenH, 0);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
@@ -190,7 +190,7 @@ void display(void)
 	char stx[85];
 	sprintf( stx, "[BRIDGE SIM %4.2f]", ElapsedTime );
 	if( bridgesim ) DestroyGPUGeometry( bridgesim );
-	bridgesim = EmitGeometryFromFontString( captureitfont, stx );
+	bridgesim = EmitGeometryFromFontString( captureitfont, stx, 0 );
 	CheckForNewerShader( textshader );
 	ApplyShader( textshader, shaderprops );
 	RenderGPUGeometry( bridgesim );
@@ -243,7 +243,7 @@ int main(int argc, char **argv)
 
 	mbf = LoadBitmapFontByName( "../../assets/fonts/OldSansBlack.hgfont" );
 	captureitfont = LoadBitmapFontByName( "../../assets/fonts/CaptureIt.hgfont" );
-	helloworld = EmitGeometryFromFontString( mbf, "Hello, world." );
+	helloworld = EmitGeometryFromFontString( mbf, "Hello, world.", 0 );
 
 
 	struct OBJFile * model = OpenOBJ( "../../assets/models/ball.obj", 1 );
@@ -260,7 +260,7 @@ int main(int argc, char **argv)
 
 	}
 	stx[i] = 0;
-	lottatext = EmitGeometryFromFontString( captureitfont, stx );
+	lottatext = EmitGeometryFromFontString( captureitfont, stx, 0 );
 	RenderGPUGeometry( lottatext );
 
 	glutDisplayFunc( display );

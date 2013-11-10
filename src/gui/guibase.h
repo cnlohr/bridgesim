@@ -28,7 +28,7 @@ struct GUIBase
 };
 
 
-void GenericHandleKeyboard( struct GUIBase * b, char c, int down, int focused ); //If unfocused, treat as a hotkey only.
+void GenericHandleKeyboard( struct GUIBase * b, int c, int down, int focused ); //If unfocused, treat as a hotkey only.
 int  GenericCheckClick( struct GUIBase * b, float screenx, float screeny, int button, int down );
 void GenericHandleMove( struct GUIBase * b, float screenx, float screeny, int buttonmask ); 	//Return 0 if received event.
 
@@ -53,7 +53,7 @@ void WindowAddElement( struct GUIWindow * w, struct GUIBase * g );
 void WindowTakeFocus( struct GUIWindow * w, struct GUIBase * g );
 void WindowHandleMouseMove( struct GUIWindow * w, float x, float y, int mask );
 void WindowHandleMouseClick( struct GUIWindow * w, float x, float y, int button, int down );
-void WindowHandleKeyboard( struct GUIWindow * w, char c, int down );
+void WindowHandleKeyboard( struct GUIWindow * w, int c, int down );
 void WindowRender( struct GUIWindow * w );
 void DestroyGUIWindow( struct GUIWindow * w );
 

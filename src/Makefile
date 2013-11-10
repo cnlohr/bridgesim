@@ -2,10 +2,12 @@ all : test
 #test32.exe
 
 SRCS:=test.c graphics/graphicscore.c graphics/bitmapfont.c graphics/objreader.c \
+	graphics/glutmain.c \
 	util/os_generic.c util/linmath.c util/3dutils.c commonassets.c \
-	gui/button.c gui/guibase.c
+	gui/button.c gui/guibase.c 
 
 OBJS:=test.o graphics/graphicscore.o graphics/bitmapfont.o graphics/objreader.o \
+	graphics/glutmain.o \
 	util/os_generic.o util/linmath.o util/3dutils.o commonassets.o \
 	gui/button.o gui/guibase.o
 

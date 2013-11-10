@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-void  GenericHandleKeyboard( struct GUIBase * b, char c, int down, int focused )
+void  GenericHandleKeyboard( struct GUIBase * b, int c, int down, int focused )
 {
 	if( b->focused )
 	{
@@ -37,7 +37,7 @@ int  GenericCheckClick( struct GUIBase * b, float screenx, float screeny, int bu
 {
 	int inside = b->x <= screenx && b->y <= screeny && b->x + b->w >= screenx && b->y + b->h >= screeny;
 
-	if( button != 1 ) return;
+	if( button != 0 ) return;
 
 	if( down )
 	{
@@ -77,7 +77,7 @@ struct GUIWindow * CreateGUIWindow()
 {
 	struct GUIWindow * ret = malloc( sizeof( struct GUIWindow ) );
 	memset( ret->elements, 0, sizeof( ret->elements ) );
-	ret->renderbuffer = MakeRFBuffer( 1, TTRGBA );
+	ret->renderbuffer = MakeRFBuffer( 0, TTRGBA );
 	ret->torender = CreateTexture();
 	return ret;
 }
@@ -96,16 +96,17 @@ void WindowHandleMouseMove( struct GUIWindow * w, float x, float y, int mask )
 void WindowHandleMouseClick( struct GUIWindow * w, float x, float y, int button, int down )
 {
 	int i;
+
 	for( i = 0; i < MAX_GUI_ELEMENTS; i++ )
 	{
 		struct GUIBase * g = w->elements[i];
 
-		if( g && g->CheckClick );
+		if( g && g->CheckClick )
 			g->CheckClick( g, x, y, button, down );
 	}
 }
 
-void WindowHandleKeyboard( struct GUIWindow * w, char c, int down )
+void WindowHandleKeyboard( struct GUIWindow * w, int c, int down )
 {
 	int i;
 	for( i = 0; i < MAX_GUI_ELEMENTS; i++ )
@@ -139,7 +140,8 @@ void WindowTakeFocus( struct GUIWindow * w, struct GUIBase * g )
 	{
 		if( g == w->elements[i] )
 		{
-			w->elements[w->focusid]->focused = 0;
+			if( w->focusid >= 0 )
+				w->elements[w->focusid]->focused = 0;
 			w->elements[i]->focused = 1;
 			w->focusid = i;
 			return;

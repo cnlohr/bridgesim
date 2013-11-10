@@ -1231,10 +1231,19 @@ void DestroyGPUGeometry( struct GPUGeometry * g )
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-//// END OF STANDARD GRAPHICS CORE - BEGIN HIGH LEVEL FUNCTIONALITY ///////////
-///////////////////////////////////////////////////////////////////////////////
-
+void DrawSquare( float x, float y, float w, float h )
+{
+	glBegin(GL_QUADS);
+	glTexCoord2f(0.0, 0.0);
+	glVertex3f(0.0, 0.0, 0.0);
+	glTexCoord2f(1.0, 0.0);
+	glVertex3f(ScreenW, 0.0, 0.0);
+	glTexCoord2f(1.0, 1.0);
+	glVertex3f(ScreenW, ScreenH, 0.0);
+	glTexCoord2f(0.0, 1.0);
+	glVertex3f(0.0, ScreenH, 0.0);
+	glEnd();
+}
 
 
 

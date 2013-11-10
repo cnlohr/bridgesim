@@ -113,7 +113,7 @@ void display(void)
 	glTranslatef( 0., 0., -10 );
 	glRotatef( ElapsedTime * 100, 0, 1, 0 );
 	glColor3f( 1,1,1 );
-
+	glScalef(.2,.2,.2);
 	CheckForNewerShader( modelshader );
 	ApplyShader( modelshader, shaderprops );
 	RenderGPUGeometry( modelgeo );
@@ -246,7 +246,7 @@ int main(int argc, char **argv)
 	helloworld = EmitGeometryFromFontString( mbf, "Hello, world.", 0 );
 
 
-	struct OBJFile * model = OpenOBJ( "../../assets/models/ball.obj", 1 );
+	struct OBJFile * model = OpenOBJ( "../../assets/models/g1.obj", 1 );
 	modelgeo = model->Objects[0]->geometry;
 
 

@@ -28,6 +28,27 @@ void copy3d( float * out, const float * in );
 
 //Quaternion things...
 
+void quatsetnone( float * q );
+void quatcopy( float * qout, const float * qin );
+void quatfromeuler( float * q, const float * euler );
+void quattoeuler( float * euler, const float * q );
+void quatfromaxisangle( float * q, const float * axis, float radians );
+float quatmagnitude( const float * q );
+float quatinvsqmagnitude( const float * q );
+void quatnormalize( float * qout, const float * qin );  //Safe for in to be same as out.
+void quattomatrix( float * matrix44, const float * q );
+void quatgetconjugate( float * qout, const float * qin );
+void quatgetreciprocal( float * qout, const float * qin );
+void quatsub( float * qout, const float * a, const float * b );
+void quatadd( float * qout, const float * a, const float * b );
+void quatrotateabout( float * qout, const float * a, const float * b );  //same as quat multiply, not piecewise multiply.
+void quatscale( float * qout, const float * qin, float s );
+float quatinnerproduct( const float * qa, const float * qb );
+void quatouterproduct( float * outvec3, float * qa, float * qb );
+void quatevenproduct( float * q, float * qa, float * qb );
+void quatoddproduct( float * outvec3, float * qa, float * qb );
+void quatslerp( float * q, const float * qa, const float * qb, float t );
+void quatrotatevector( float * vec3out, const float * quat, const float * vec3in );
 
 
 #endif

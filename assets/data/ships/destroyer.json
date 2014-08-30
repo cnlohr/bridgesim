@@ -1,0 +1,68 @@
+{ "name": "Destroyer",
+  "components": [
+      { "type": "CrewStation",
+	"model": "ball",
+	"hp": 5000,
+	"mass": 1000,
+	"position": [0.0, 0.0, 0.0],
+	"orientation": [0.0, 0.0, 0.0],
+	"members": ["Captain", "Helm", "Communications", "Science", "Engineering"],
+	"efficiency": .7,
+	"maxPower": 200
+      },
+      { "type": "HullSection",
+	"model": "ball",
+	"hp": 100,
+	"mass": 400,
+	"position": [0.0, 0.0, 30.0],
+	"orientation": [0.0, 0.0, 0.0],
+      },
+      { "type": "WeaponsStation",
+	"model": "ball",
+	"hp": 2000,
+	"mass": 800,
+	"position": [0.0, 0.0, 45.0],
+	"orientation": [0.0, 0.0, 0.0],
+	"efficiency": .8,
+	"maxPower": 2000,
+	"capabilities": ["tube", "tube", "tube", "beam"]
+      },
+      { "type": "ShieldGenerator",
+	"model": "ball",
+	"hp": 5000,
+	"mass": 600,
+	"position": [0.0, 0.0, -15.0],
+	"orientation": [0.0, 0.0, 0.0],
+	"efficiency": .5,
+	"maxPower": 5000,
+	"shields": [
+	    { "geometry": {
+		  "type": "sphere",
+		  "radius": 60,
+	      },
+	      "resistances": []
+	    }
+	]
+      },
+      { "type": "Drive",
+	"model": "ball",
+	"hp": 1000,
+	"mass": 2000,
+	"position": [0.0, 0.0, -20.0],
+	"orientation": [0.0, 0.0, 0.0],
+	"efficiency": .3,
+	"maxPower": 20000,
+	"propulsion": "impulse"
+      },
+      { "type": "Drive",
+	"model": "ball",
+	"hp": 200,
+	"mass": 8000,
+	"position": [0.0, -5.0, 0.0],
+	"orientation": [0.0, 0.0, 0.0],
+	"efficiency": .4,
+	"maxPower": 40000,
+	"propulsion": "warp"
+      }
+  ]
+}

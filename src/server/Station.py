@@ -21,9 +21,26 @@ class Station(Entity):
       return True
     return False
 
+  def setProduction(self, thing):
+    # thing should be a commodity of some sort
+    self.building = thing
+    self.buildProgress = 0
+
   def tick(self, duration):
     self.shields += self.shieldMultiplier * duration
     self.energy += self.energyMultiplier * duration
+
+    if self.building:
+      self.buildProgress += duration
+      if self.buildProgress > self.building.buildCost:
+        # We have built something!
+
+        if self.building.name in self.weaponStocks:
+          self.weaponStocks[self.building.name] += 1
+        else:
+          self.weaponStocks[self.building.name] = 1
+
+        self.buildProgress -= self.building.buildCost
 
     if self.energy > 0:
       for ship in self.docked:

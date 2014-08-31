@@ -85,6 +85,10 @@ dimensionality"""
       # Preserve the type and dimensionality.
       return type(self)(*[n1 * rhs for n1 in self.dimensions])
 
+  def __rmul__(self, lhs):
+    """Calls multiply."""
+    return self * lhs
+
   def __floordiv__(self, rhs):
     """Divide one vector by a scalar, or two vectors using floor
 division."""

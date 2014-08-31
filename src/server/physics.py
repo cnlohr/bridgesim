@@ -41,7 +41,7 @@ dimensionality"""
     return sum((n1 * n2 for n1, n2 in zip(self.dimensions,
       nvec.dimensions)))
 
-  def truth(self):
+  def __bool__(self):
     """Evaluate to True if the vector is nonzero in any dimension."""
     # Generate a list of truth values for every element in the
     # dimensionality. (0 values are False, others are True). If any of
@@ -58,16 +58,20 @@ dimensionality"""
     # Preserve the type and dimensionality.
     return type(self)(*[-n for n in self.dimensions])
 
-  def __add__(self, nvec):
+  def __add__(self, rhs):
     """Add two vectors."""
     # This operation is only defined for two vectors, so we can just
-    # pass it to _op_by_dimension_.
-    return self._op_by_dimension_(operator.add, self, nvec)
+    # pass it to _op_by_dimension_, assuming it's a vector.
+    if not issubclass(type(rhs), NVector): return NotImplemented
 
-  def __sub__(self, nvec):
+    return self._op_by_dimension_(operator.add, self, rhs)
+
+  def __sub__(self, rhs):
     """Subtract one vector from another."""
     # Again, this is only valid for two vectors.
-    return self._op_by_dimension_(operator.sub, self, nvec)
+    if not issubclass(type(rhs), NVector): return NotImplemented
+
+    return self._op_by_dimension_(operator.sub, self, rhs)
 
   def __mul__(self, rhs):
     """Multiply one vector and one scalar, or two vectors."""

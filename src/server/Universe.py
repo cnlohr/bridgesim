@@ -14,7 +14,7 @@ class Universe:
     
   # Time passes and position updates during tick
   def tick(self, duration):
-    for i in entities:
+    for i in self.entities:
       i.tick(duration)
       
   # Position changed, so check for collisions

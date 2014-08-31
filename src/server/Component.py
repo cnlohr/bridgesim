@@ -34,14 +34,14 @@ class Component:
 
 class HullSection(Component):
     def __init__(self, ship, config):
-        super.__init__(self, ship, config)
+        super().__init__(ship, config)
 
     def tick(self, duration):
-        return super.tick(duration)
+        return super().tick(duration)
 
 class CrewStation(Component):
     def __init__(self, ship, config):
-        super.__init__(self, ship, config)
+        super().__init__(ship, config)
 
     def tick(self, duration):
         return super.tick(duration)
@@ -50,7 +50,7 @@ class Drive(Component):
     def __init__(self, ship, config):
         self.throttle = 0.0
         self.thrustVector = Vector()
-        super.__init__(self, ship, config)
+        super().__init__(ship, config)
 
     def energyNeeded(self):
         if self.hp > 0:
@@ -60,11 +60,11 @@ class Drive(Component):
 
     def tick(self, duration):
         self.thrustVector = self.orientation * self.energy * self.thrust * duration
-        return super.tick(duration)
+        return super().tick(duration)
 
 class WeaponsStation(Component):
     def __init__(self, ship, config):
-        super.__init__(self, ship, config)
+        super().__init__(ship, config)
 
         self.target = None
         self.payload = None
@@ -113,7 +113,7 @@ class WeaponsStation(Component):
 
 class ShieldGenerator(Component):
     def __init__(self, ship, config):
-        super.__init__(self, ship, config)
+        super().__init__(ship, config)
 
         self.baseRadius = self.radius
         self.enabled = False

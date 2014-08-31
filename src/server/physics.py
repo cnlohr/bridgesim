@@ -6,6 +6,8 @@ class Vector:
   def __init__(self, *args, **keyargs):
     if len(args) == 1:
       self.vals = list(args[0])
+    elif len(args) == 0:
+      self.vals = [0,0,0]
     else:
       self.vals = list(args)
     self.x = self.vals[0]

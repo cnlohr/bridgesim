@@ -3,12 +3,12 @@ from Component import *
 from Missile import Missile
 
 class Ship(Entity):
-  def __init__(self, universe, config):
-    super.__init__(self, universe)
+  def __init__(self, config, universe):
+    super().__init__(config, universe)
     self.__dict__.update(config)
     temp = []
     for i in self.components:
-      temp.append(findComponent(i.type)(self, i))
+      temp.append(findComponent(i['type'])(self, i))
     self.components = temp
     
   def collide(self, other):

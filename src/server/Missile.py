@@ -1,9 +1,8 @@
 from Entity import Entity
-from Ship import Ship
 
 class Missile(Entity):
   def __init__(self, config, universe):
-    super.__init__(self, universe)
+    super.__init__(config, universe)
     self.__dict__.update(config)
     
   def fire(self, tube):
@@ -13,7 +12,7 @@ class Missile(Entity):
 
   def tick(self, duration):
     if self.pathing == "Dumb":
-      return super.tick(self, duration)
+      return super.tick(duration)
     
   def collide(self, other):
     self.destroy()

@@ -2,12 +2,15 @@
 import Universe
 import json
 import Ship
+import time
 
-with open("../../assets/data/ships/destroyer.js", 'r') as shipConfFile:
+frameRate = 30
+
+with open("../../assets/data/ships/destroyer.json", 'r') as shipConfFile:
   shipConf = json.load(shipConfFile)
 
-universe = Universe()
-ship = Ship(universe, shipConf)
+universe = Universe.Universe()
+ship = Ship.Ship(shipConf, universe)
 
 last = time.time()
 while True:

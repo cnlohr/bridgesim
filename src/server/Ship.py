@@ -15,10 +15,16 @@ class Ship(Entity):
     if type(other) is Missile:
       self.takeDamage(other.getDamage(self))
       
+  def takeDamage(damage, vector):
+    pass
+      
   def tick(self, duration):
     for i in components:
       i.tick(duration)
   
   def tock(self):
-    if self.hp <= 0:
+    totalHP = 0
+    for i in self.components:
+      totalHP += i.hp
+    if totalHP <= 0:
       self.destroy()

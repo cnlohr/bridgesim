@@ -18,6 +18,6 @@ class Missile(Entity):
   def collide(self, other):
     self.destroy()
     
-  def damage(self):
+  def getDamage(self):
     if self.impactType == "Simple":
       return 10

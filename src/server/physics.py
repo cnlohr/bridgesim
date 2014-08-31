@@ -6,10 +6,10 @@ DEBUG = True
 class DimensionalityError(Exception): pass
 
 class NVector(object):
-
   """N-dimensional vector of arbitrary units."""
+
   def __init__(self, *dimensions):
-    self.dimensions = tuple(dimensions)
+    self.dimensions = tuple(map(float, dimensions))
 
   def dimensionality(self):
     """Return the number of dimensions the vector represents."""
@@ -116,7 +116,7 @@ are of different dimensionalities, raise a DimensionalityError."""
 class Vector(NVector):
   """Three dimensional vector of arbitrary units."""
   def __init__(self, x = 0, y = 0, z = 0):
-    self.dimensions = x, y, z
+    self.dimensions = float(x), float(y), float(z)
 
   def cross(self, vec):
     """Calculate the cross product of two 3-vectors."""

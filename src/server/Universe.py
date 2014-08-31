@@ -12,10 +12,22 @@ class Universe:
   def remove(self, entity):
     self.entities.remove(entity)
     
-  def tick(self):
+  # Time passes and position updates during tick
+  def tick(self, duration):
     for i in entities:
-      for j in i.tick(duration):
-        self.state.update(j)
-        
+      i.tick(duration)
+      
+  # Position changed, so check for collisions
+  def collide(self):
+    for i in entities:
+      for j in entities:
+        if i != j:
+          i.collide(j)
+          
+  # Now that damage is dealt in collisions, destroy objects and update logic
+  def tock(self):
+    for i in entities:
+      i.tock()
+      
   def dumpState(self):
     return self.state

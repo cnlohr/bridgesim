@@ -19,9 +19,9 @@ class Missile(Entity):
     self.location = tube.ship.location + tube.relativeLocation
     self.rotation = physics.rotate(tube.ship.rotation + tube.relativeRotation, center=tube.ship.center)
     self.instantiate(self)
-class Ship(Entity):
-class AI:
-class PlayerAI(AI):
-class NPC(AI):
-class Team:
-class ShipGroup(Entity):
+
+  def tick(self, duration):
+    if self.pathing == "Dumb":
+      return super.tick(self, duration)
+    
+    

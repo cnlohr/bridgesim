@@ -14,8 +14,8 @@ class Component:
         self.idle = True
 
         self.__dict__.update(config)
-        self.orientation = Vector(self.orientation)
-        self.position = Vector(self.position)
+        self.orientation = Vector(*self.orientation)
+        self.position = Vector(*self.position)
         print(self.hp)
 
     def energyNeeded(self):

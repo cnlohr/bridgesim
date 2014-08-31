@@ -2,9 +2,9 @@ import math
 
 DEBUG = True
 
-class NVector(object):
+class DimensionalityError(Exception): pass
 
-  class IncompatibleVectorDimensionalityError(Exception): pass
+class NVector(object):
 
   """N-dimensional vector of arbitrary units."""
   def __init__(self, *dimensions):
@@ -31,7 +31,7 @@ class NVector(object):
     """Calculate the dot product of two vectors of the same
 dimensionality"""
     if self.dimensionality() != nvec.dimensionality():
-      raise self.IncompatibleVectorDimensionalityError(
+      raise self.DimensionalityError(
           "cannot get dot product of vectors %s and %s"
           % (self, nvec))
 

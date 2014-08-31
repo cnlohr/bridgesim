@@ -29,14 +29,9 @@
 	"mass": 600,
 	"position": [0.0, 0.0, -15.0],
 	"orientation": [0.0, 0.0, 0.0],
-	"shields": [
-	    { "geometry": {
-		  "type": "sphere",
-		  "radius": 60,
-	      },
-	      "resistances": []
-	    }
-	]
+	"shieldRadius": 60,
+	"shieldHp": 20000,
+	"shieldRecharge": 5
       },
       { "type": "Drive",
 	"model": "ball",

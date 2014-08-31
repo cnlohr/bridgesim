@@ -96,7 +96,7 @@ dimensionality"""
 class Vector(NVector):
   """Three dimensional vector of arbitrary units."""
   def __init__(self, x = 0, y = 0, z = 0):
-    self.dimensions = x, y, y
+    self.dimensions = x, y, z
 
   def cross(self, vec):
     """Calculate the cross product of two 3-vectors."""

@@ -48,6 +48,10 @@ dimensionality"""
     # these are True, then the vector is True.
     return any(map(bool, self.dimensions))
 
+  def __eq__(self, nvec):
+    """Test equality between two vectors."""
+    return self.dimensions == nvec.dimensions
+
   def __neg__(self):
     """Negate the vector."""
 

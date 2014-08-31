@@ -1,4 +1,5 @@
 import math
+import operator
 
 DEBUG = True
 
@@ -55,37 +56,56 @@ dimensionality"""
 
   def __add__(self, nvec):
     """Add two vectors."""
-
-    # Preserve the type and dimensionality.
-    return type(self)(*[n1 + n2 for n1, n2 in zip(self.dimensions,
-      nvec.dimensions)])
+    # This operation is only defined for two vectors, so we can just
+    # pass it to _op_by_dimension_.
+    return self._op_by_dimension_(operator.add, self, nvec)
 
   def __sub__(self, nvec):
     """Subtract one vector from another."""
+    # Again, this is only valid for two vectors.
+    return self._op_by_dimension_(operator.sub, self, nvec)
 
-    # Preserve the type and dimensionality.
-    return type(self)(*[n1 - n2 for n1, n2 in zip(self.dimensions,
-      nvec.dimensions)])
+  def __mul__(self, rhs):
+    """Multiply one vector and one scalar, or two vectors."""
+    # First, check if the right hand side is a vector. If so, pass it to
+    # _op_by_dimension_.
+    if issubclass(type(rhs), NVector):
+      return self._op_by_dimension_(operator.mul, self, rhs)
 
-  def __mul__(self, nvec):
-    """Multiply two vectors."""
+    # Otherwise, use the scalar.
+    else:
+      # Preserve the type and dimensionality.
+      return type(self)(*[n1 * rhs for n1 in self.dimensions])
 
-    # Preserve the type and dimensionality.
-    return type(self)(*[n1 * n2 for n1, n2 in zip(self.dimensions,
-      nvec.dimensions)])
+  def __floordiv__(self, rhs):
+    """Divide one vector by a scalar, or two vectors using floor
+division."""
+    if issubclass(type(rhs), NVector):
+      return self._op_by_dimension_(operator.floordiv, self, rhs)
 
-  def __floordiv__(self, nvec):
-    """Divide one vector by another using floor division."""
+    else:
+      return type(self)(*[n1 // rhs for n1 in self.dimensions])
 
-    # Preserve the type and dimensionality.
-    return type(self)(*[n1 // n2 for n1, n2 in zip(self.dimensions,
-      nvec.dimensions)])
-  def __truediv__(self, nvec):
-    """Divide one vector by another using floor division."""
+  def __truediv__(self, rhs):
+    """Divide one vector by a scalar, or two vectors using true
+division."""
+    if issubclass(type(rhs), NVector):
+      return self._op_by_dimension_(operator.truediv, self, rhs)
 
-    # Preserve the type and dimensionality.
-    return type(self)(*[n1 / n2 for n1, n2 in zip(self.dimensions,
-      nvec.dimensions)])
+    else:
+      return type(self)(*[n1 / rhs for n1 in self.dimensions])
+
+  @classmethod
+  def _op_by_dimension_(cls, op, nvec1, nvec2):
+    """Apply an operator, element by element, to two NVectors. If they
+are of different dimensionalities, raise a DimensionalityError."""
+
+    if nvec1.dimensionality() != nvec2.dimensionality():
+      raise DimensionalityError("cannot perform operation on vectors \
+%s and %s" % (nvec1, nvec2))
+
+    return cls(*[op(n1, n2) for n1, n2 in zip(nvec1.dimensions,
+      nvec2.dimensions)])
 
   def __str__(self):
     return "<" + ", ".join(("%f" % n for n in self.dimensions)) + ">"

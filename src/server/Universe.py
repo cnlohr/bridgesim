@@ -19,15 +19,15 @@ class Universe:
       
   # Position changed, so check for collisions
   def collide(self):
-    for i in entities:
-      for j in entities:
+    for i in self.entities:
+      for j in self.entities:
         if i != j:
           if i.checkCollide(j):
             i.collide(j)
           
   # Now that damage is dealt in collisions, destroy objects and update logic
   def tock(self):
-    for i in entities:
+    for i in self.entities:
       i.tock()
       
   def dumpState(self):

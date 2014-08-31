@@ -14,6 +14,9 @@ class Component:
         self.idle = True
 
         self.__dict__.update(config)
+        self.orientation = Vector(self.orientation)
+        self.position = Vector(self.position)
+        print(self.hp)
 
     def energyNeeded(self):
         if self.hp > 0:
@@ -27,7 +30,7 @@ class Component:
         return amount - applied
 
     def isDead(self):
-        return hp == 0
+        return self.hp == 0
 
     def tick(self, duration):
         return {}
@@ -44,7 +47,7 @@ class CrewStation(Component):
         super().__init__(ship, config)
 
     def tick(self, duration):
-        return super.tick(duration)
+        return super().tick(duration)
 
 class Drive(Component):
     def __init__(self, ship, config):
@@ -59,7 +62,7 @@ class Drive(Component):
             return 0
 
     def tick(self, duration):
-        self.thrustVector = self.orientation * self.energy * self.thrust * duration
+        self.thrustVector = self.orientation * self.energy * self.throttle * duration
         return super().tick(duration)
 
 class WeaponsStation(Component):
@@ -72,6 +75,7 @@ class WeaponsStation(Component):
         self.loadStatus = "Empty"
 
     def load(self, payload):
+        print("Loading")
         if self.weapons == "tube":
             if self.loadStatus == "Empty":
                 self.loadStatus = "Loading"
@@ -84,12 +88,16 @@ class WeaponsStation(Component):
                 self.loadStatus = "Unloading"
 
     def fire(self):
+        print("Firing...")
         if self.weapons == "tube":
+            print("check 1", self.loadStatus, self.hp, self.energy)
             if self.loadStatus == "Loaded" and self.hp > 0 and self.energy > .1:
+                print("check 2")
                 self.payload.fire(self)
                 self.loadStatus = "Empty"
                 self.payload = None
         else:
+          print("Damn...")
           pass
             # Fire the phasers here
 
@@ -100,6 +108,7 @@ class WeaponsStation(Component):
             return .1
 
     def tick(self, duration):
+        print("Ticking tube", duration)
         if self.loadStatus == "Loading":
             self.loadTime -= duration * self.energy
             if self.loadTime <= 0:

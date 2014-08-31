@@ -1,6 +1,7 @@
 from Entity import Entity
 from Component import *
 from Missile import Missile
+import sys
 
 class Ship(Entity):
   def __init__(self, config, universe):
@@ -12,21 +13,26 @@ class Ship(Entity):
     self.components = temp
     
   def collide(self, other):
+    print("I got hit!")
     if type(other) is Missile:
-      self.takeDamage(other.getDamage(self))
+      self.takeDamage(other.getDamage())
       
-  def takeDamage(damage, vector):
+  def takeDamage(self, damage):
+    print("I'm hit!", damage)
     for i in self.components:
+      print(i.type, "Took damage")
       damage = i.takeDamage(damage)
       if damage <= 0:
         break
       
   def tick(self, duration):
-    for i in components:
+    print("Ticking ship")
+    for i in self.components:
       i.tick(duration)
   
   def tock(self):
     for i in self.components:
-      if not self.isDead():
+      if not i.isDead():
         return
+    sys.exit("Boom!")
     self.destroy()

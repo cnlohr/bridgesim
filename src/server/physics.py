@@ -15,6 +15,8 @@ class Vector:
     self.z = self.vals[2]
   def __add__(self, other):
     return Vector(self.x+other.x, self.y+other.y, self.z+other.z)
+  def __sub__(self, other):
+    return Vector(self.x-other.x, self.y-other.y, self.z-other.z)
   def __mul__(self, other):
     if type(other) is type(self):
       return Vector(self.x*other.x, self.y*other.y, self.z*other.z)

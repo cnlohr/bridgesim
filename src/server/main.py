@@ -1,43 +1,51 @@
 #!/usr/bin/python
-from gameObjects import *
-import traceback
-import network
+import Universe
+import json
+import Ship
 import time
+import physics
+import Missile
 
-try:
-  import ConfigParser
-except ImportError:
-  import configparser as ConfigParser
+frameRate = 30
 
-try:
-  xrange(1)
-except NameError:
-  xrange = range
+with open("../../assets/data/ships/destroyer.json", 'r') as shipConfFile:
+  shipConf = json.load(shipConfFile)
+with open("../data/weapons.json", 'r') as missileConfFile:
+  missileConf = json.load(missileConfFile)
+missileConf = missileConf['weapons']['nuke']
 
-def getConfig(server):
-  #Eventually, this function will get config from the clients
-  config = {"difficulty":5, "mapType":"random", "ships":[{"type":"Player", "name":"Fartemis", "players":["127.0.0.1"]}], "height":1000, "width":1000, "frameRate":30, "teams":["foo"]}
-  return config
-  
-def mapGenerator(config):
-  entities = []
-  for i in config['ships']:
-    entities.append(Ship(i))
-  for i in xrange(int(config['difficulty'])):
-    conf = {"Type":"Enemy", "id":i}
-    entities.append(Ship(conf))
-  return entities
+universe = Universe.Universe()
+ship1 = Ship.Ship(shipConf, universe)
+ship2 = Ship.Ship(shipConf, universe)
+ship1.location = physics.Vector(0,0,0)
+ship2.location = physics.Vector(10000000000,0,0)
+ship2.rotation = physics.Vector(3.1415,3.14159,3.1415)
+universe.add(ship1)
+universe.add(ship2)
 
-server = network.Server("0.0.0.0", 8553)
-server.waitForStart()
-config = getConfig(server)
-universe = Universe(height=config['height'], width=config['width'])
-entities = mapGenerator(config)
-universe.add(entities)
-universe.teams = config['teams']
+missile = Missile.Missile(missileConf, universe)
 
+for i in ship1.components:
+  if i.type == "WeaponsStation":
+    i.energy = 1
+    i.load(missile)
+universe.tick(5)
+universe.collide()
+universe.tock()
+
+universe.tick(5)
+universe.collide()
+universe.tock()
+
+for i in ship1.components:
+  if i.type == "WeaponsStation":
+    i.fire()
+    
+last = time.time()
 while True:
-  messages = server.getMessages()
-  universe.tick(config['frameRate'])
-  server.send(universe.dumpState())
+  universe.tick(time.time()-last)
+  last = time.time()
+  universe.collide()
+  universe.tock()
+  time.sleep(1/frameRate)
   

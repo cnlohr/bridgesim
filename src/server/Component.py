@@ -8,11 +8,17 @@ class Component:
         self.hp = 1
         self.mass = 1000
         self.position = Vector()
-        self.orientation = Vector(0, 0, 0)
+        self.orientation = Vector(1, 0, 0)
         self.energy = 0.0
         self.idle = True
 
         self.__dict__.update(config)
+
+    def energyNeeded(self):
+        if self.hp > 0:
+            return .1
+        else:
+            return 0
 
     def tick(self, duration):
         return {}
@@ -34,21 +40,66 @@ class CrewStation(Component):
 class Drive(Component):
     def __init__(self, ship, config):
         self.throttle = 0.0
-        self.working = True
         self.thrustVector = Vector()
         super.__init__(self, ship, config)
 
-    def tick(self, duration):
-        consumption = duration * self.throttle * self.energy
-        if self.ship.energy >= consumption:
-            self.ship.energy -= consumption
-            self.thrustVector = self.orientation * 
-            
-            self.working = True
-            self.ship.energy -= min(self.ship.energy, duration * self.throttle * self.energy)
+    def energyNeeded(self):
+        if self.hp > 0:
+            return self.throttle
         else:
-            self.working = False
-        
+            return 0
+
+    def tick(self, duration):
+        self.thrustVector = self.orientation * self.energy * self.thrust * duration
+        return super.tick(duration)
+
+class WeaponsStation(Component):
+    def __init__(self, ship, config):
+        super.__init__(self, ship, config)
+
+        self.target = None
+        self.payload = None
+        self.loadTime = 0
+        self.loadStatus = "Empty"
+
+    def load(self, payload):
+        if self.weapons == "tube":
+            if self.loadStatus == "Empty":
+                self.loadStatus = "Loading"
+                self.loadTime = payload.loadTime
+                self.payload = payload
+
+    def unload(self, payload):
+        if self.weapons == "tube":
+            if self.loadStatus == "Loading":
+                self.loadStatus = "Unloading"
+
+    def fire(self):
+        if self.weapons == "tube":
+            if self.loadStatus == "Loaded" and self.hp > 0 and self.energy > .1:
+                self.payload.fire(self)
+                self.loadStatus = "Empty"
+                self.payload = None
+        else:
+            # Fire the phasers here
+
+    def energyNeeded(self):
+        if self.weapons == "phaser" or self.loadStatus == "Loading" or self.loadStatus == "Unloading":
+            return 1
+        else:
+            return .1
+
+    def tick(self, duration):
+        if self.loadStatus == "Loading":
+            self.loadTime -= duration * self.energy
+            if self.loadTime <= 0:
+                self.loadStatus = "Loaded"
+
+        if self.loadStatus == "Unloading":
+            self.loadTime += duration * self.energy
+            if self.loadTime >= self.payload.loadTime:
+                self.loadStatus = "Empty"
+                self.payload = None
 
 COMPONENT_CLASSES = {
     "Component": Component,

@@ -21,7 +21,7 @@
 	"mass": 800,
 	"position": [0.0, 0.0, 45.0],
 	"orientation": [0.0, 0.0, 0.0],
-	"capabilities": ["tube", "tube", "tube", "beam"]
+	"weapons": "tube"
       },
       { "type": "ShieldGenerator",
 	"model": "ball",

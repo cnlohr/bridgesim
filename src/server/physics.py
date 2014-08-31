@@ -32,8 +32,8 @@ class NVector(object):
     """Calculate the dot product of two vectors of the same
 dimensionality"""
     if self.dimensionality() != nvec.dimensionality():
-      raise self.DimensionalityError(
-          "cannot get dot product of vectors %s and %s"
+      raise DimensionalityError(
+          "cannot perform operation on vectors %s and %s"
           % (self, nvec))
 
     # Iterate through each set of dimensions, as (x1, x2), (y1, y2),
@@ -134,7 +134,8 @@ class Vector(NVector):
     """Calculate the cross product of two 3-vectors."""
     x1, y1, z1 = self.dimensions
     x2, y2, z2 = vec.dimensions
-    return Vector(y1 * z2, z1 * x2, x1 * y2)
+    return Vector(y1 * z2 - z1 * y2, z1 * x2 - x1 * z2,
+        x1 * y2 - y1 * x2)
 
 def VectorMultiply(scalar, vector):
   result = [0] * len(vector)

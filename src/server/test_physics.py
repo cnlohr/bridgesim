@@ -6,6 +6,7 @@ from physics import *
 class TestNVectors(unittest.TestCase):
   def setUp(self):
     self.v11  = NVector(1, 1)
+    self.v22  = NVector(2, 2)
     self.v34  = NVector(3, 4)
     self.v10  = NVector(10, 0)
     self.vneg = NVector(-2, -2)
@@ -23,6 +24,13 @@ class TestNVectors(unittest.TestCase):
     self.assertEqual(self.v10.norm(), NVector(1, 0))
     self.assertEqual(self.v11.norm(),
         NVector(0.7071067811865475, 0.7071067811865475))
+
+  def test_dot(self):
+    """Test dot product calculation"""
+    self.assertEqual(self.v22.dot(self.v34), 14)
+
+    with self.assertRaises(DimensionalityError):
+      NVector(2, 2).dot(NVector(3, 3, 3))
 
   def test_init(self):
     """Check initialization"""
@@ -101,6 +109,19 @@ class TestNVectors(unittest.TestCase):
   def test_stringy(self):
     """Test string formatting"""
     self.assertEqual(str(NVector(1, 1)), "<1.000000, 1.000000>")
+
+class TestVectors(unittest.TestCase):
+  def setUp(self):
+    self.v0   = Vector()
+    self.v333 = Vector(3, 3, 3)
+    self.v234 = Vector(2, 3, 4)
+
+  def test_cross(self):
+    self.assertEqual(Vector(5, 0, 0).cross(Vector(0, 5, 0)),
+        Vector(0, 0, 25))
+
+    self.assertEqual(Vector(0, 5, 0).cross(Vector(5, 0, 0)),
+        Vector(0, 0, -25))
 
 if __name__ == "__main__":
   unittest.main()

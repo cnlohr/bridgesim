@@ -22,7 +22,8 @@ class Universe:
     for i in entities:
       for j in entities:
         if i != j:
-          i.collide(j)
+          if i.checkCollide(j):
+            i.collide(j)
           
   # Now that damage is dealt in collisions, destroy objects and update logic
   def tock(self):

@@ -6,14 +6,14 @@
 	"mass": 1000,
 	"position": [0.0, 0.0, 0.0],
 	"orientation": [0.0, 0.0, 0.0],
-	"members": ["Captain", "Helm", "Communications", "Science", "Engineering"],
+	"members": ["Captain", "Helm", "Communications", "Science", "Engineering"]
       },
       { "type": "HullSection",
 	"model": "ball",
 	"hp": 100,
 	"mass": 400,
 	"position": [0.0, 0.0, 30.0],
-	"orientation": [0.0, 0.0, 0.0],
+	"orientation": [0.0, 0.0, 0.0]
       },
       { "type": "WeaponsStation",
 	"model": "ball",

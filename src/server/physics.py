@@ -2,29 +2,108 @@ import math
 
 DEBUG = True
 
-class Vector:
-  def __init__(self, *args, **keyargs):
-    if len(args) == 1:
-      self.vals = list(args[0])
-    elif len(args) == 0:
-      self.vals = [0,0,0]
-    else:
-      self.vals = list(args)
-    self.x = self.vals[0]
-    self.y = self.vals[1]
-    self.z = self.vals[2]
-  def __add__(self, other):
-    return Vector(self.x+other.x, self.y+other.y, self.z+other.z)
-  def __sub__(self, other):
-    return Vector(self.x-other.x, self.y-other.y, self.z-other.z)
-  def __mul__(self, other):
-    if type(other) is type(self):
-      return Vector(self.x*other.x, self.y*other.y, self.z*other.z)
-    else:
-      return Vector(other*self.x, other*self.y, other*self.z)
-  def length(self):
-    return math.sqrt(self.x**2 + self.y**2 + self.z**2)
-      
+class NVector(object):
+
+  class IncompatibleVectorDimensionalityError(Exception): pass
+
+  """N-dimensional vector of arbitrary units."""
+  def __init__(self, *dimensions):
+    self.dimensions = tuple(dimensions)
+
+  def dimensionality(self):
+    """Return the number of dimensions the vector represents."""
+    return len(self.dimensions)
+
+  def magnitude(self):
+    """Calculate the magniture of the vector."""
+    return math.sqrt(sum((n**2 for n in self.dimensions)))
+
+  def norm(self):
+    """Calculate the unit vector of the same dimensionality."""
+    mag = self.magnitude()
+
+    # Note that we do some strange things with types and arguments here,
+    # so that we automatically construct more specific subclasses, if
+    # appropriate.
+    return type(self)(*[n/mag for n in self.dimensions])
+
+  def dot(self, nvec):
+    """Calculate the dot product of two vectors of the same
+dimensionality"""
+    if self.dimensionality() != nvec.dimensionality():
+      raise self.IncompatibleVectorDimensionalityError(
+          "cannot get dot product of vectors %s and %s"
+          % (self, nvec))
+
+    # Iterate through each set of dimensions, as (x1, x2), (y1, y2),
+    # etc.
+    return sum((n1 * n2 for n1, n2 in zip(self.dimensions,
+      nvec.dimensions)))
+
+  def truth(self):
+    """Evaluate to True if the vector is nonzero in any dimension."""
+    # Generate a list of truth values for every element in the
+    # dimensionality. (0 values are False, others are True). If any of
+    # these are True, then the vector is True.
+    return any(map(bool, self.dimensions))
+
+  def __neg__(self):
+    """Negate the vector."""
+
+    # Preserve the type and dimensionality.
+    return type(self)(*[-n for n in self.dimensions])
+
+  def __add__(self, nvec):
+    """Add two vectors."""
+
+    # Preserve the type and dimensionality.
+    return type(self)(*[n1 + n2 for n1, n2 in zip(self.dimensions,
+      nvec.dimensions)])
+
+  def __sub__(self, nvec):
+    """Subtract one vector from another."""
+
+    # Preserve the type and dimensionality.
+    return type(self)(*[n1 - n2 for n1, n2 in zip(self.dimensions,
+      nvec.dimensions)])
+
+  def __mul__(self, nvec):
+    """Multiply two vectors."""
+
+    # Preserve the type and dimensionality.
+    return type(self)(*[n1 * n2 for n1, n2 in zip(self.dimensions,
+      nvec.dimensions)])
+
+  def __floordiv__(self, nvec):
+    """Divide one vector by another using floor division."""
+
+    # Preserve the type and dimensionality.
+    return type(self)(*[n1 // n2 for n1, n2 in zip(self.dimensions,
+      nvec.dimensions)])
+  def __truediv__(self, nvec):
+    """Divide one vector by another using floor division."""
+
+    # Preserve the type and dimensionality.
+    return type(self)(*[n1 / n2 for n1, n2 in zip(self.dimensions,
+      nvec.dimensions)])
+
+  def __str__(self):
+    return "<" + ", ".join(("%f" % n for n in self.dimensions)) + ">"
+
+  def __repr__(self):
+    return "'%s'" % str(self)
+
+class Vector(NVector):
+  """Three dimensional vector of arbitrary units."""
+  def __init__(self, x, y, z):
+    self.dimensions = x, y, y
+
+  def cross(self, vec):
+    """Calculate the cross product of two 3-vectors."""
+    x1, y1, z1 = self.dimensions
+    x2, y2, z2 = vec.dimensions
+    return Vector(y1 * z2, z1 * x2, x1 * y2)
+
 def VectorMultiply(scalar, vector):
   result = [0] * len(vector)
   for i in range(len(vector)):

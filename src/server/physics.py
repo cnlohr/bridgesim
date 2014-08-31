@@ -2,6 +2,23 @@ import math
 
 DEBUG = True
 
+class Vector:
+  def __init__(self, *args, **keyargs):
+    if len(args) == 1:
+      self.vals = list(args[0])
+    else:
+      self.vals = list(args)
+    self.x = self.vals[0]
+    self.y = self.vals[1]
+    self.z = self.vals[2]
+  def __add__(self, other):
+    return Vector(self.x+other.x, self.y+other.y, self.z+other.z)
+  def __mul__(self, other):
+    if type(other) is type(self):
+      return Vector(self.x*other.x, self.y*other.y, self.z*other.z)
+    else:
+      return Vector(other*self.x, other*self.y, other*self.z)
+      
 def VectorMultiply(scalar, vector):
   result = [0] * len(vector)
   for i in range(len(vector)):

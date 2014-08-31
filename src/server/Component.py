@@ -42,7 +42,7 @@ class Drive(Component):
         consumption = duration * self.throttle * self.energy
         if self.ship.energy >= consumption:
             self.ship.energy -= consumption
-            self.thrustVector = self.orientation * 
+            self.thrustVector = self.orientation * 1
             
             self.working = True
             self.ship.energy -= min(self.ship.energy, duration * self.throttle * self.energy)

@@ -16,15 +16,17 @@ class Ship(Entity):
       self.takeDamage(other.getDamage(self))
       
   def takeDamage(damage, vector):
-    pass
+    for i in self.components:
+      damage = i.takeDamage(damage)
+      if damage <= 0:
+        break
       
   def tick(self, duration):
     for i in components:
       i.tick(duration)
   
   def tock(self):
-    totalHP = 0
     for i in self.components:
-      totalHP += i.hp
-    if totalHP <= 0:
-      self.destroy()
+      if not self.isDead():
+        return
+    self.destroy()

@@ -17,7 +17,7 @@ class Entity:
     
   def checkCollide(self, other):
     vector = self.location - other.location
-    distance = math.sqrt(vector.x**2 + vector.y**2 + vector.z**2)
+    distance = vector.length()
     if distance < self.radius + other.radius:
       return True
     return False

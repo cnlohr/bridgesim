@@ -90,6 +90,7 @@ class WeaponsStation(Component):
                 self.loadStatus = "Empty"
                 self.payload = None
         else:
+          pass
             # Fire the phasers here
 
     def energyNeeded(self):

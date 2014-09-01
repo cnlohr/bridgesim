@@ -5,8 +5,11 @@ class Universe:
     self.width = width
     self.teams = []
     self.state = []
+    self.maxID = 0
     
   def add(self, entity):
+    maxID += 1
+    entity.id = maxID
     self.entities.append(entity)
     
   def remove(self, entity):

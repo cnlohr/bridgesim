@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import unittest
-from physics import *
+from vectors import *
 
 class TestNVectors(unittest.TestCase):
   def setUp(self):

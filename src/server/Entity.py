@@ -5,6 +5,7 @@ class Entity:
   def __init__(self, config, universe, radius=100, mass=1000):
     self.location = physics.Vector()
     self.rotation = physics.Vector()
+    self.velocity = physics.Vector()
     self.universe = universe
     self.radius = radius
     self.mass = mass

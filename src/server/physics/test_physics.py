@@ -58,7 +58,7 @@ class TestNVectors(unittest.TestCase):
     """Check vector addition"""
     self.assertEqual(NVector(3, 2, 1, 0) + NVector(0, 1, 2, 3),
         NVector(3, 3, 3, 3))
-
+    
     # Make sure some exceptions are raised.
     with self.assertRaises(DimensionalityError):
       NVector(2, 2) + NVector(3, 3, 3)
@@ -69,7 +69,7 @@ class TestNVectors(unittest.TestCase):
     """Check vector subtraction"""
     self.assertEqual(NVector(3, 2, 1, 0) - NVector(0, 1, 2, 3),
         NVector(3, 1, -1, -3))
-
+    
     # Make sure some exceptions are raised.
     with self.assertRaises(DimensionalityError):
       NVector(2, 2) - NVector(3, 3, 3)

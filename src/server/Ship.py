@@ -34,7 +34,6 @@ class Ship(Entity):
         break
       
   def tick(self, duration):
-    print("Ticking ship")
     # Figure out how much each component wants and is being allowed
     needed = {component: component.energyNeeded() * duration * self.energySupply[component] for component in self.components}
 
@@ -47,12 +46,12 @@ class Ship(Entity):
     print("Consumed", totalNeeded * factor, "power this tick; now", self.energy)
     for i in self.components:
       i.energy = factor * duration * self.energySupply[i] * needed[i]
-      print("Gave ", i.energy, " power to ", type(i))
+      #print("Gave ", i.energy, " power to ", type(i))
       i.tick(duration)
   
   def tock(self):
     for i in self.components:
       if not i.isDead():
         return
-    sys.exit("Boom!")
+    print("Boom!")
     self.destroy()

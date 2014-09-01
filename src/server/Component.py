@@ -108,7 +108,7 @@ class WeaponsStation(Component):
             return .1
 
     def tick(self, duration):
-        print("Ticking tube", duration)
+        #print("Ticking tube", duration)
         if self.loadStatus == "Loading":
             self.loadTime -= duration * self.energy
             if self.loadTime <= 0:

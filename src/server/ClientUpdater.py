@@ -12,9 +12,11 @@ ALL_KINDS = (
 )
 
 class Client:
-    def __init__(self, sender):
+    def __init__(self, server, address, sender):
         self.updates = {}
         self.sender = sender
+        self.address = address
+        self.server = server
         self.sender.listeners.append(self.clientListener)
 
     def clientListener(self, data):
@@ -26,15 +28,20 @@ class Client:
 
         if kind == "entity":
             self.updates[kind].append(
-                { "id": entity.id,
-                  "loc": entity.location.dimensions,
-                  "rot": entity.rotation.dimensions,
-                  "vel": entity.velocity.dimensions
+                { "id": data.id,
+                  "loc": data.location,
+                  "rot": data.rotation,
+                  "vel": data.velocity
               })
         # TODO add the remaining kinds of updates
 
+    def destroy(self):
+        self.sender.close()
+        self.server.clients.remove(self)
+
     def sendUpdate(self):
-        self.sender.send(self.updates)
+        if self.updates:
+            self.sender.send(self.updates)
         self.updates = {}
 
 class ClientUpdater:
@@ -61,16 +68,16 @@ class ClientUpdater:
     # Expose to client
     def requestUpdates(self, kind, frequency):
         self.clientWants[kind] = frequency
-        if kind not in offsets:
+        if kind not in self.offsets:
             # We use a random offset to attempt a more
             # steady usage of networking
-            offsets[kind] = random.randrange(frequency)
+            self.offsets[kind] = random.randrange(frequency)
 
     def sendUpdates(self, kinds):
         for kind in kinds:
             if kind == "entity":
                 for entity in self.universe.entities:
-                    self.client.queueUpdate(entity)
+                    self.client.queueUpdate(kind, entity)
             elif kind == "comms":
                 pass
             elif kind == "weapons":
@@ -84,12 +91,11 @@ class ClientUpdater:
             elif kind == "meta":
                 pass
         self.client.sendUpdate()
-            
 
     def tick(self):
         toUpdate = []
         for kind in self.clientWants:
-            if self.clientWants[kind] > 0 and ticks % self.clientWants[kind] == self.offsets[kind]:
+            if self.clientWants[kind] > 0 and self.ticks % self.clientWants[kind] == self.offsets[kind]:
                 toUpdate.append(kind)
 
         self.sendUpdates(toUpdate)

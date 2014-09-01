@@ -5,11 +5,12 @@ class Universe:
     self.width = width
     self.teams = []
     self.state = []
+    self.updaters = []
     self.maxID = 0
     
   def add(self, entity):
-    maxID += 1
-    entity.id = maxID
+    self.maxID += 1
+    entity.id = self.maxID
     self.entities.append(entity)
     
   def remove(self, entity):
@@ -32,6 +33,16 @@ class Universe:
   def tock(self):
     for i in self.entities:
       i.tock()
+
+    # This is just things that need to be ticked, in general
+    # Right now, it's network stuff
+    for i in list(self.updaters):
+      try:
+        i.tick()
+      except OSError:
+        print("Error updating client at", i.client.address," destroying")
+        i.client.destroy()
+        self.updaters.remove(i)
       
   def dumpState(self):
     return self.state

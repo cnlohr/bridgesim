@@ -5,6 +5,8 @@ import Ship
 import time
 import physics
 import Missile
+import ServerNetwork
+import os
 
 frameRate = 30
 
@@ -15,6 +17,10 @@ with open("../data/weapons.json", 'r') as missileConfFile:
 missileConf = missileConf['weapons']['nuke']
 
 universe = Universe.Universe()
+
+network = ServerNetwork.NetworkServer({}, universe)
+network.start()
+
 ship1 = Ship.Ship(shipConf, universe)
 ship2 = Ship.Ship(shipConf, universe)
 ship1.location = physics.Vector(0,0,0)

@@ -11,6 +11,9 @@ class NVector(object):
   def __init__(self, *dimensions):
     self.dimensions = tuple(map(float, dimensions))
 
+    # Store an iterator.
+    self.iter_count = 0
+
   def dimensionality(self):
     """Return the number of dimensions the vector represents."""
     return len(self.dimensions)
@@ -119,6 +122,17 @@ are of different dimensionalities, raise a DimensionalityError."""
     return cls(*[op(n1, n2) for n1, n2 in zip(nvec1.dimensions,
       nvec2.dimensions)])
 
+  def __iter__(self):
+    return self
+
+  def __next__(self):
+    try:
+      c = self.iter_count
+      self.iter_count += 1
+      return self.dimensions[c]
+    except IndexError:
+      raise StopIteration
+
   def __str__(self):
     return "<" + ", ".join(("%f" % n for n in self.dimensions)) + ">"
 
@@ -128,7 +142,10 @@ are of different dimensionalities, raise a DimensionalityError."""
 class Vector(NVector):
   """Three dimensional vector of arbitrary units."""
   def __init__(self, x = 0, y = 0, z = 0):
-    self.dimensions = float(x), float(y), float(z)
+    self.x, self.y, self.z = float(x), float(y), float(z)
+    self.dimensions = self.x, self.y, self.z
+
+    self.iter_count = 0
 
   def cross(self, vec):
     """Calculate the cross product of two 3-vectors."""

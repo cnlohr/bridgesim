@@ -17,10 +17,48 @@ class Client:
         self.sender = sender
         self.address = address
         self.server = server
-        self.sender.listeners.append(self.clientListener)
+        self.sender.listeners.append(self.dataReceived)
 
-    def clientListener(self, data):
-        print("Data:", data)
+    def functionTable(self, op):
+        """
+        Generates and returns a function table, which maps network opcodes
+        onto actual functions. Format is:
+        <op name>: {
+            "function": <function pointer>,
+            "args": <predefined arguments list>,
+            "kwargs": <predefined kwargs dictionary>
+        }
+        """
+        if not hasattr(self, "__functionTable"):
+            self.__functionTable = {
+                "setUpdates": {"function": self.updater.requestUpdates},
+                "allUpdates": {"function": self.updater.fullSync},
+                "setData": {"function": self.server.store.set},
+                "getData": {"function": self.server.store.get}
+            }
+        return self.__functionTable[op]
+
+    def dataReceived(self, data):
+        print("Got data:",data)
+        if data and "op" in data:
+            if "seq" in data:
+                func = self.functionTable(data["op"])["function"]
+                args = self.functionTable(data["op"]).get("args", [])
+                kwargs = self.functionTable(data["op"]).get("kwargs", {})
+                args += data.get("args", [])
+                kwargs.update(data.get("kwargs", {}))
+
+                try:
+                    print("Calling",func.__name__,"(", args, kwargs, ")")
+                    result = func(*args, **kwargs)
+                    self.sender.send({"result": result, "seq": data["seq"]})
+                except Exception as e:
+                    print(e)
+                    self.sender.send({"result": None, "error": e, "seq": data["seq"]})
+            else:
+                print("Warning: received command without seq")
+        else:
+            print("Warning: received invalid op", data["op"])
 
     def queueUpdate(self, kind, data):
         if kind not in self.updates:
@@ -48,6 +86,7 @@ class ClientUpdater:
     def __init__(self, universe, client):
         self.universe = universe
         self.client = client
+        self.client.updater = self
 
         self.ticks = 0
 

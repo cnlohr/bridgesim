@@ -8,7 +8,8 @@ ALL_KINDS = (
     "engineer",
     "helm",
     "ship",
-    "meta"
+    "meta",
+    "universe"
 )
 
 class Client:
@@ -51,6 +52,7 @@ class Client:
                 try:
                     print("Calling",func.__name__,"(", args, kwargs, ")")
                     result = func(*args, **kwargs)
+                    print("Sending result")
                     self.sender.send({"result": result, "seq": data["seq"]})
                 except Exception as e:
                     print(e)

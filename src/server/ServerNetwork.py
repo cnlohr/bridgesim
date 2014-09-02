@@ -3,7 +3,7 @@ import threading
 import socket
 import json
 import time
-import sys
+import os
 import physics
 
 class VectorEncoder(json.JSONEncoder):
@@ -124,8 +124,7 @@ class NetworkServer:
             serversocket.listen(0)
         except:
             print("Networking failed.")
-            sys.exit(-1)
-            return
+            os._exit(1)
 
         while True:
             connection, address = serversocket.accept()

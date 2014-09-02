@@ -62,7 +62,7 @@ class SocketNetworker:
 
     def send(self, data):
         try:
-            out = json.dumps(data, cls=VectorEncoder).encode('UTF-8')
+            out = json.dumps(data, cls=VectorEncoder, separators=(',',':')).encode('UTF-8')
             self.socket.sendall(out)
             return True
         except Exception as e:

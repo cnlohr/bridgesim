@@ -95,7 +95,7 @@ class SocketNetworker:
             else:
                 self.received += buf
                 try:
-                    result = json.loads(received.decode('UTF-8'))
+                    result = json.loads(self.received.decode('UTF-8'))
                     self.received = bytearray()
                     return result
                 except: # TODO we really should handle errors here
@@ -133,7 +133,6 @@ class NetworkServer:
             self.clients.append(client)
 
             updater = ClientUpdater(self.universe, client)
-            updater.requestUpdates("entity", 5)
 
             threading.Thread(target=client.sender.listen, daemon=True).start()
 

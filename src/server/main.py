@@ -5,7 +5,7 @@ import Ship
 import time
 import physics
 import Missile
-import ServerNetwork
+import NetworkServer
 import os
 
 frameRate = 30
@@ -18,7 +18,7 @@ missileConf = missileConf['weapons']['nuke']
 
 universe = Universe.Universe()
 
-network = ServerNetwork.NetworkServer({}, universe)
+network = NetworkServer.NetworkServer({}, universe)
 network.start()
 
 ship1 = Ship.Ship(shipConf, universe)

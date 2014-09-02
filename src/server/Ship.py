@@ -43,10 +43,8 @@ class Ship(Entity):
     # do this before looping so nothing grabs power allotted to something else
     self.energy -= totalNeeded * factor
 
-    print("Consumed", totalNeeded * factor, "power this tick; now", self.energy)
     for i in self.components:
       i.energy = factor * duration * self.energySupply[i] * needed[i]
-      #print("Gave ", i.energy, " power to ", type(i))
       i.tick(duration)
   
   def tock(self):

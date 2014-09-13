@@ -13,9 +13,13 @@ class Ship(Entity):
     # How much power Engineering is giving to each component - [0, 1] normally
     self.energySupply = {}
 
+    self.numComponents = 0
+
     temp = []
     for i in self.components:
       comp = findComponent(i['type'])(self, i)
+      numComponents += 1
+      comp.id = numComponents
       temp.append(comp)
       self.energySupply[comp] = 1
     self.components = temp

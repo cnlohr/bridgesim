@@ -18,8 +18,8 @@ class Ship(Entity):
     temp = []
     for i in self.components:
       comp = findComponent(i['type'])(self, i)
-      numComponents += 1
-      comp.id = numComponents
+      self.numComponents += 1
+      comp.id = self.numComponents
       temp.append(comp)
       self.energySupply[comp] = 1
     self.components = temp

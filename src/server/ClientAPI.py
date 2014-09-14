@@ -10,9 +10,12 @@ class BaseContext:
     def instance(self, global_context):
         return None
 
+# This is actually very different from a context.
+# Meh. It just holds the things we need it to.
 class GlobalContext:
-    def __init__(self, universes, data):
+    def __init__(self, universes, network):
         self.universes = universes
+        self.network = network
 
 # ** Function Decorator **
 def expose(func, label=None):
@@ -110,6 +113,9 @@ class ClientAPI:
         if hasattr(result, 'Context'):
             return result.Context(instance=result)
         return result
+
+    def getTable(self):
+        return self.classes
 
     def register(self, cls):
         if not hasattr(cls, "Context"):

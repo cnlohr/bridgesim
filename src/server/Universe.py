@@ -1,5 +1,7 @@
+from ClientAPI import BaseContext
+
 class Universe:
-  class Context:
+  class Context(BaseContext):
     def __init__(self, instance=None, serial=None):
       if instance:
         self.id = instance.id

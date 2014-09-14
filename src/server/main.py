@@ -1,12 +1,16 @@
 #!/usr/bin/python
 import Universe
 import json
+import Entity
 import Ship
+import Component
 import time
 import physics
 import Missile
 import NetworkServer
 import os
+import ClientAPI
+import SharedClientDataStore
 
 frameRate = 30
 
@@ -17,9 +21,25 @@ with open("../data/weapons.json", 'r') as missileConfFile:
 missileConf = missileConf['weapons']['nuke']
 
 universe = Universe.Universe()
+universe.id = 0
 
 network = NetworkServer.NetworkServer({}, universe)
-network.start()
+
+api = ClientAPI.ClientAPI(ClientAPI.GlobalContext([universe], network))
+
+# Register ALL the classes!
+api.register(Universe.Universe)
+api.register(Entity.Entity)
+api.register(Ship.Ship)
+api.register(Component.Component)
+api.register(Component.Drive)
+api.register(Component.WeaponsStation)
+api.register(Component.ShieldGenerator)
+api.register(SharedClientDataStore.SharedClientDataStore)
+
+print(api.getTable())
+
+network.start(api)
 
 ship1 = Ship.Ship(shipConf, universe)
 ship2 = Ship.Ship(shipConf, universe)

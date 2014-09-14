@@ -26,7 +26,9 @@ class NetworkServer:
 
         while True:
             connection, address = serversocket.accept()
-            client = Client(self, address, SocketNetworker(connection))
+
+            client = Client(self.api, address, self, SocketNetworker(connection))
+            client.id = len(self.clients)
 
             self.clients.append(client)
 
@@ -36,6 +38,7 @@ class NetworkServer:
 
             self.universe.updaters.append(updater)
 
-    def start(self):
+    def start(self, api):
+        self.api = api
         self.thread = threading.Thread(target=self.run, daemon=True)
         self.thread.start()

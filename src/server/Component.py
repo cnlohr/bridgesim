@@ -1,5 +1,5 @@
 from physics import Vector
-from ClientAPI import expose, BaseContext
+from ClientAPI import expose, readable, writable, BaseContext
 
 @readable('model', 'hp', 'mass', 'radius', 'position', 'orientation')
 class Component:

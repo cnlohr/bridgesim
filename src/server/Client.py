@@ -13,41 +13,36 @@ ALL_KINDS = (
 )
 
 class Client:
-    def __init__(self, server, address, sender):
+    def __init__(self, api, address, server, sender):
         self.updates = {}
         self.sender = sender
         self.address = address
         self.server = server
+        self.api = api
         self.sender.listeners.append(self.dataReceived)
 
-    def functionTable(self, op):
-        """
-        Generates and returns a function table, which maps network opcodes
-        onto actual functions. Format is:
-        <op name>: {
-            "function": <function pointer>,
-            "args": <predefined arguments list>,
-            "kwargs": <predefined kwargs dictionary>
-        }
-        """
-        if not hasattr(self, "__functionTable"):
-            self.__functionTable = {
-                "setUpdates": {"function": self.updater.requestUpdates},
-                "allUpdates": {"function": self.updater.fullSync},
-                "setData": {"function": self.server.store.set},
-                "getData": {"function": self.server.store.get}
-            }
-        return self.__functionTable[op]
+#        <op name>: {
+#            "function": <function pointer>,
+#            "args": <predefined arguments list>,
+#            "kwargs": <predefined kwargs dictionary>
+#        }
 
     def dataReceived(self, data):
         print("Got data:",data)
         if data and "op" in data:
             if "seq" in data:
-                func = self.functionTable(data["op"])["function"]
-                args = self.functionTable(data["op"]).get("args", [])
-                kwargs = self.functionTable(data["op"]).get("kwargs", {})
-                args += data.get("args", [])
-                kwargs.update(data.get("kwargs", {}))
+                clsName, funcName = data["op"].split('__', 2)
+                info = api.classes[clsName]
+                if funcName in info["methods"]:
+                    func = info["methods"][funcName]
+                    args = data.get("args", [])
+                    kwargs = data.get("kwargs", {})
+
+                elif funcName in info["writable"] and len(data["args"]) == 1:
+                    pass
+
+                elif funcName in info["readable"] and len(data["args"]) == 0:
+                    pass
 
                 try:
                     print("Calling",func.__name__,"(", args, kwargs, ")")
@@ -99,7 +94,7 @@ class ClientUpdater:
         self.offsets = {}
 
     # Expose to client
-    def fullSync(self):
+    def flulSync(self):
         self.sendUpdates(ALL_KINDS)
 
     # Expose to client

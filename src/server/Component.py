@@ -11,10 +11,10 @@ class Component:
                 self.component = instance.id
 
             elif serial:
-                self.universe, self.ship, self.component = serial
+                _, self.universe, self.ship, self.component = serial
 
         def serialized(self):
-            return (self.universe, self.ship, self.component)
+            return ("Component", self.universe, self.ship, self.component)
 
         def instance(self, global_context):
             return global_context.universes[self.universe].entities[self.ship].components[self.component]

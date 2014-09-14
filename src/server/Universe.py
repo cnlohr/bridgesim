@@ -1,4 +1,18 @@
 class Universe:
+  class Context:
+    def __init__(self, instance=None, serial=None):
+      if instance:
+        self.id = instance.id
+
+      elif serial:
+        _, self.id = serial
+
+    def serialized(self):
+      return ("Universe", self.id)
+
+    def instance(self, global_context):
+      return global_context.universes[self.id]
+
   def __init__(self, height=100000000, width=100000000):
     self.entities = []
     self.height = height

@@ -1,11 +1,17 @@
 import threading
+from ClientAPI import BaseContext, expose
 
 class SharedClientDataStore:
+    class Context(BaseContext):
+        def instance(self, global_context):
+            return global_context.network.store
+
     def __init__(self):
         self.__data = {}
         self.readonly = []
         self.lock = threading.Lock()
 
+    @expose
     def get(self, key, default=None):
         with self.lock:
             if key in self.__data:
@@ -13,6 +19,7 @@ class SharedClientDataStore:
             else:
                 return default
 
+    @expose
     def getAndStoreIfNew(self, key, default, ro=False):
         val = self.get(key, default)
         with self.lock:
@@ -22,6 +29,7 @@ class SharedClientDataStore:
                     self.readonly.append(key)
         return val
 
+    @expose
     def set(self, key, value, ro=False):
         if key not in self.readonly:
             with self.lock:
@@ -31,6 +39,7 @@ class SharedClientDataStore:
                 return True
         return False
 
+    @expose
     def setIfMissing(self, key, value, ro=False):
         with self.lock:
             if key not in self.__data:

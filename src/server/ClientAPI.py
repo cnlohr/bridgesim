@@ -18,9 +18,30 @@ class GlobalContext:
 def expose(func, label=None):
     if not label:
         label = func.__name__
-    setattr(func, "exposed", True)
-    setattr(func, "label", label)
+    setattr(func, "__api_exposed__", True)
+    setattr(func, "__api_label__", label)
     return func
+
+def readable(*attrs):
+    def decorator(cls):
+        if not hasattr(cls, "__api_readable__"):
+            setattr(cls, "__api_readable__", [])
+        cls.__api_readable__.extend([attr for attr in attrs if attr not in cls.__api_readable__])
+        return cls
+    return decorator
+
+def writable(*attrs):
+    def decorator(cls):
+        if not hasattr(cls, "__api_readable__"):
+            setattr(cls, "__api_readable__", [])
+
+        if not hasattr(cls, "__api_writable__"):
+            setattr(cls, "__api_writable__", [])
+
+        cls.__api_readable__.extend(attrs)
+        cls.__api_writable__.extend(attrs)
+        return cls
+    return decorator
 
 # There are two parts to this:
 #
@@ -46,6 +67,35 @@ class ClientAPI:
         self.classes = {}
         self.globalContext = globalContext
 
+    def onGet(self, name, ctx):
+        cls, attr = name.split(".")
+        classInfo = self.classes[cls]
+
+        if attr not in classInfo["readable"]:
+            raise AttributeError("Attribute {} is not readable -- did you @readable it?".format(attr))
+
+        context = classInfo["context"]
+        instance = context(serial=ctx).instance(self.globalContext)
+
+        return getattr(instance, attr, None)
+
+    def onSet(self, name, ctx, value):
+        cls, attr = name.split(".")
+        classInfo = self.classes[cls]
+
+        if attr not in classInfo["writable"]:
+            raise AttributeError("Attribute {} is not writable -- did you @writable it?".format(attr))
+
+        context = classInfo["context"]
+        instance = context(serial=ctx).instance(self.globalContext)
+
+        setattr(instance, attr, value)
+
+        if attr in classInfo["readable"]:
+            return getattr(instance, attr)
+        else:
+            return None
+
     def onCall(self, name, ctx, *args, **kwargs):
         cls, func = name.split(".")
         classInfo = self.classes[cls]
@@ -67,12 +117,26 @@ class ClientAPI:
         methods = {}
         for methname in dir(cls):
             method = getattr(cls, methname)
-            if hasattr(method, "exposed") and hasattr(method, "label"):
-                methods[method.label] = {"callable": method}
-                        
+            if hasattr(method, "__api_exposed__") and hasattr(method, "__api_label__"):
+                methods[method.__api_label__] = {"callable": method}
+
+        readable = []
+        writable = []
+        if hasattr(cls, "__api_readable__"):
+            for attrName in cls.__api_readable__:
+                readable.append(attrName)
+
+        if hasattr(cls, "__api_writable__"):
+            for attrName in cls.__api_writable__:
+                writable.append(attrName)
+
+                if attrName not in readable:
+                    readable.append(attrName)
 
         self.classes[cls.__name__] = {
             "class": cls,
             "context": cls.Context,
-            "methods": methods
+            "methods": methods,
+            "readable": readable,
+            "writable": writable
         }

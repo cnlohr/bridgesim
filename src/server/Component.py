@@ -91,6 +91,8 @@ class Drive(Component):
         self.thrustVector = self.orientation * self.energy * self.throttle * duration
         return super().tick(duration)
 
+@readable('loadTime', 'loadStatus')
+@writable('target')
 class WeaponsStation(Component):
     def __init__(self, ship, config):
         super().__init__(ship, config)

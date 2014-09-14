@@ -1,6 +1,23 @@
 from physics import Vector
+from ClientAPI import expose, BaseContext
 
 class Component:
+    class Context(BaseContext):
+        def __init__(self, instance=None, serial=None):
+            if instance:
+                self.universe = instance.ship.universe.id
+                self.ship = instance.ship.id
+                self.component = instance.id
+
+            elif serial:
+                self.universe, self.ship, self.component = serial
+
+        def serialized(self):
+            return (self.universe, self.ship, self.component)
+
+        def instance(self, global_context):
+            return global_context.universes[self.universe].entities[self.ship].components[self.component]
+
     def __init__(self, ship, config):
         self.ship = ship
 

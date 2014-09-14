@@ -72,6 +72,15 @@ class Drive(Component):
         self.thrustVector = Vector()
         super().__init__(ship, config)
 
+    @expose
+    def setThrottle(self, throttle):
+        self.throttle = max(0.0, min(1.0, throttle))
+
+    @expose
+    def setOrientation(self, orient):
+        if len(orient) == 3 and abs(orient[0]**2 + orient[1]**2 + orient[2]**2 - 1) < .01:
+            self.orientation = Vector(orient)
+
     def energyNeeded(self):
         if self.hp > 0:
             return self.throttle
@@ -91,6 +100,7 @@ class WeaponsStation(Component):
         self.loadTime = 0
         self.loadStatus = "Empty"
 
+    @expose
     def load(self, payload):
         print("Loading")
         if self.weapons == "tube":
@@ -99,11 +109,13 @@ class WeaponsStation(Component):
                 self.loadTime = payload.loadTime
                 self.payload = payload
 
+    @expose
     def unload(self, payload):
         if self.weapons == "tube":
             if self.loadStatus == "Loading":
                 self.loadStatus = "Unloading"
 
+    @expose
     def fire(self):
         print("Firing...")
         if self.weapons == "tube":
@@ -157,10 +169,12 @@ class ShieldGenerator(Component):
 
         return amount
 
+    @expose
     def enable(self):
         self.radius = self.shieldRadius
         self.enabled = True
 
+    @expose
     def disable(self):
         self.radius = self.baseRadius
         self.enabled = False

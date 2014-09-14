@@ -1,6 +1,7 @@
 from physics import Vector
 from ClientAPI import expose, BaseContext
 
+@readable('model', 'hp', 'mass', 'radius', 'position', 'orientation')
 class Component:
     class Context(BaseContext):
         def __init__(self, instance=None, serial=None):
@@ -66,20 +67,12 @@ class CrewStation(Component):
     def tick(self, duration):
         return super().tick(duration)
 
+@writable('throttle', 'orientation')
 class Drive(Component):
     def __init__(self, ship, config):
         self.throttle = 0.0
         self.thrustVector = Vector()
         super().__init__(ship, config)
-
-    @expose
-    def setThrottle(self, throttle):
-        self.throttle = max(0.0, min(1.0, throttle))
-
-    @expose
-    def setOrientation(self, orient):
-        if len(orient) == 3 and abs(orient[0]**2 + orient[1]**2 + orient[2]**2 - 1) < .01:
-            self.orientation = Vector(orient)
 
     def energyNeeded(self):
         if self.hp > 0:
@@ -151,6 +144,7 @@ class WeaponsStation(Component):
                 self.loadStatus = "Empty"
                 self.payload = None
 
+@readable('enabled')
 class ShieldGenerator(Component):
     def __init__(self, ship, config):
         super().__init__(ship, config)

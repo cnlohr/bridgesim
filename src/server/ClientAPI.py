@@ -106,7 +106,10 @@ class ClientAPI:
         instance = context(serial=ctx).instance(self.globalContext)
 
         method = classInfo["methods"][func]["callable"]
-        return method(instance, *args, **kwargs)
+        result = method(instance, *args, **kwargs)
+        if hasattr(result, 'Context'):
+            return result.Context(instance=result)
+        return result
 
     def register(self, cls):
         if not hasattr(cls, "Context"):

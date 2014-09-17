@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Echo client program
 import socket
 import sys

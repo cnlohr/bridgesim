@@ -32,26 +32,26 @@ class Client:
         if data and "op" in data:
             if "seq" in data:
                 clsName, funcName = data["op"].split('__', 2)
-                info = api.classes[clsName]
+                info = self.api.classes[clsName]
                 if funcName in info["methods"]:
-                    func = info["methods"][funcName]
-                    args = data.get("args", [])
-                    kwargs = data.get("kwargs", {})
+                    try:
+                        context = data.get("context", ())
+                        args = data.get("args", [])
+                        kwargs = data.get("kwargs", {})
+
+                        print("Calling",funcName,"(", args, kwargs, ")")
+                        result = self.api.onCall(clsName + "." + funcName,
+                                                 context, args, kwargs)
+                        self.sender.send({"result": result, "seq": data["seq"]})
+                    except Exception as e:
+                        print(e)
+                        self.sender.send({"result": None, "error": e, "seq": data["seq"]})
 
                 elif funcName in info["writable"] and len(data["args"]) == 1:
                     pass
 
                 elif funcName in info["readable"] and len(data["args"]) == 0:
                     pass
-
-                try:
-                    print("Calling",func.__name__,"(", args, kwargs, ")")
-                    result = func(*args, **kwargs)
-                    print("Sending result")
-                    self.sender.send({"result": result, "seq": data["seq"]})
-                except Exception as e:
-                    print(e)
-                    self.sender.send({"result": None, "error": e, "seq": data["seq"]})
             else:
                 print("Warning: received command without seq")
         else:

@@ -30,8 +30,8 @@ nw = SocketNetworker(s)
 caller = RemoteFunctionCaller(nw)
 
 try:
-    caller.setData("test", "success")
-    print(caller.getData("test", default="failish"))
+    print(caller.SharedClientDataStore__set("test", "success"))
+    print(caller.SharedClientDtaStore__get("test", default="failish"))
 except TimeoutError:
     print("Timed out.")
 

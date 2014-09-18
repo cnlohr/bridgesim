@@ -13,7 +13,7 @@ class NetworkServer:
         self.__dict__.update(config)
         self.universe = universe
         self.store = SharedClientDataStore()
-        self.clients = []
+        self.clients = {}
 
     def run(self):
         try:
@@ -30,7 +30,9 @@ class NetworkServer:
             client = Client(self.api, address, self, SocketNetworker(connection))
             client.id = len(self.clients)
 
-            self.clients.append(client)
+            self.clients[client.id] = client
+
+            client.sender.send({"id": client.id})
 
             updater = ClientUpdater(self.universe, client)
 

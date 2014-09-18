@@ -33,3 +33,6 @@ class Missile(Entity):
     if self.impactType == "Simple":
       return 10
     return 100000000000
+
+  def getID(self):
+    return self.name

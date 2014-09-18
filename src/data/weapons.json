@@ -1,5 +1,6 @@
 {"weapons": {
     "nuke": {
+        "name": "Nuke",
 	"distance": 2500,
 	"loadTime": 1,
 	"ammoLimit": 3,
@@ -14,6 +15,7 @@
 	"energy": 10,
 	"ammoGenerationWeight": 1 },
     "torpedo": {
+        "name": "Torpedo",
 	"distance": 1000,
 	"loadCost": 5,
 	"ammoLimit": 12,
@@ -28,6 +30,7 @@
 	"energy": 2,
 	"ammoGenerationWeight": 4 },
     "mine": {
+        "name": "Mine",
 	"distance": 1200,
 	"loadCost": 8,
 	"ammoLimit": 62,
@@ -42,6 +45,7 @@
 	"energy": 2,
 	"ammoGenerationWeight": 13 },
     "emp": {
+        "name": "EMP",
 	"distance": 2500,
 	"loadCost": 14,
 	"ammoLimit": 6,

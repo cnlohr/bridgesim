@@ -27,6 +27,9 @@ class Entity:
     self.radius = radius
     self.mass = mass
   
+  def getID(self):
+    return self.id
+
   def instantiate(self):
     self.universe.add(self)
     

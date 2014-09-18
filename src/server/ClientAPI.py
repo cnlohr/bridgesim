@@ -111,8 +111,8 @@ class ClientAPI:
         method = classInfo["methods"][func]["callable"]
         result = method(instance, *args, **kwargs)
         if hasattr(result, 'Context'):
-            return result.Context(instance=result)
-        return result
+            return {"result": result, "context": result.Context(instance=result)}
+        return {"result": result}
 
     def getTable(self):
         return self.classes

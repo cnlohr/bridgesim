@@ -28,30 +28,32 @@ class Client:
 #        }
 
     def dataReceived(self, data):
-        print("Got data:",data)
         if data and "op" in data:
             if "seq" in data:
                 clsName, funcName = data["op"].split('__', 2)
                 info = self.api.classes[clsName]
                 if funcName in info["methods"]:
-                    try:
-                        context = data.get("context", ())
-                        args = data.get("args", [])
-                        kwargs = data.get("kwargs", {})
+                    context = data.get("context", ())
+                    args = data.get("args", [])
+                    kwargs = data.get("kwargs", {})
 
-                        print("Calling",funcName,"(", args, kwargs, ")")
+                    print("call {}.{}({}, {})".format(clsName, funcName, ', '.join(args), ', '.join(['='.join(a) for a in kwargs.items()])))
+                    try:
                         result = self.api.onCall(clsName + "." + funcName,
-                                                 context, args, kwargs)
-                        self.sender.send({"result": result, "seq": data["seq"]})
+                                                 context, *args, **kwargs)
+                        rDict = {"result": None, "seq": data["seq"]}
+                        rDict.update(result)
+                        self.sender.send(rDict)
                     except Exception as e:
                         print(e)
                         self.sender.send({"result": None, "error": e, "seq": data["seq"]})
 
                 elif funcName in info["writable"] and len(data["args"]) == 1:
-                    pass
+                    print("Client tried to set {} to {} in class {} -- IMPLEMENT ME".format(
+                        funcName, data["args"][0], clsName))
 
                 elif funcName in info["readable"] and len(data["args"]) == 0:
-                    pass
+                    print("Client tried to get {} of class {} -- IMPLEMENT ME".format(data["args"][0], clsName))
             else:
                 print("Warning: received command without seq")
         else:

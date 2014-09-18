@@ -61,7 +61,9 @@ class RemoteFunctionCaller:
         return rf
 
     def dataReceived(self, data):
-        print("Got data", data)
+        if "id" in data:
+            self.id = data["id"]
+
         if "seq" in data:
             if data["seq"] in self.calls:
                 self.calls[data["seq"]].result = data

@@ -20,7 +20,7 @@
 	"model": "ball",
 	"hp": 2000,
 	"mass": 800,
-	"position": [0.0, 0.0, 45.0],
+	"position": [-45.0, 0.0, 0.0],
 	"orientation": [0.0, 0.0, 0.0],
 	"weapons": "tube"
       },

@@ -7,10 +7,10 @@
 	"impactType": 1,
 	"damage": 1000,
 	"blastRadius": 600,
-	"thrust": 1,
+	"thrust": 0.01,
 	"turning": 1,
 	"drag": 0.01,
-	"pathing": 5,
+	"pathing": "Dumb",
 	"energy": 10,
 	"ammoGenerationWeight": 1 },
     "torpedo": {

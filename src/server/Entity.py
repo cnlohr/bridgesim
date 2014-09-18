@@ -42,3 +42,7 @@ class Entity:
   
   def tick(self, duration):
     self.location += self.velocity*duration
+    return self.location[0], self.location[1], self.radius
+
+  def tock(self):
+    return

@@ -115,7 +115,7 @@ class WeaponsStation(Component):
         print("Firing...")
         if self.weapons == "tube":
             print("check 1", self.loadStatus, self.hp, self.energy)
-            if self.loadStatus == "Loaded" and self.hp > 0 and self.energy > .1:
+            if self.loadStatus == "Loaded" and self.hp > 0:
                 print("check 2")
                 self.payload.fire(self)
                 self.loadStatus = "Empty"
@@ -132,10 +132,11 @@ class WeaponsStation(Component):
             return .1
 
     def tick(self, duration):
-        #print("Ticking tube", duration)
+#        print("Ticking tube", duration)
         if self.loadStatus == "Loading":
-            self.loadTime -= duration * self.energy
+            self.loadTime -= self.energy
             if self.loadTime <= 0:
+                print("Tube is loaded")
                 self.loadStatus = "Loaded"
 
         if self.loadStatus == "Unloading":

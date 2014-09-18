@@ -15,10 +15,10 @@ class Universe:
     def instance(self, global_context):
       return global_context.universes[self.id]
 
-  def __init__(self, height=100000000, width=100000000):
+  def __init__(self, size=(100000000, 100000000)):
     self.entities = []
-    self.height = height
-    self.width = width
+    self.height = size[1]
+    self.width = size[0]
     self.teams = []
     self.state = []
     self.updaters = []
@@ -34,8 +34,10 @@ class Universe:
     
   # Time passes and position updates during tick
   def tick(self, duration):
+    data = []
     for i in self.entities:
-      i.tick(duration)
+      data.append(i.tick(duration))
+    return data
       
   # Position changed, so check for collisions
   def collide(self):

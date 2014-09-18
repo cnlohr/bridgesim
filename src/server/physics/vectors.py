@@ -44,6 +44,10 @@ dimensionality"""
     return sum((n1 * n2 for n1, n2 in zip(self.dimensions,
       nvec.dimensions)))
 
+  def __getitem__(self, key):
+    """Return the dimesion given by key when used in a slice notation"""
+    return self.dimensions[key]
+
   def __bool__(self):
     """Evaluate to True if the vector is nonzero in any dimension."""
     # Generate a list of truth values for every element in the

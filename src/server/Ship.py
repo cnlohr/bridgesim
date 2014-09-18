@@ -40,7 +40,6 @@ class Ship(Entity):
   def tick(self, duration):
     # Figure out how much each component wants and is being allowed
     needed = {component: component.energyNeeded() * duration * self.energySupply[component] for component in self.components}
-
     totalNeeded = sum(needed.values())
     factor = 1 if totalNeeded <= self.energy else self.energy / totalNeeded
 
@@ -50,6 +49,7 @@ class Ship(Entity):
     for i in self.components:
       i.energy = factor * duration * self.energySupply[i] * needed[i]
       i.tick(duration)
+    return super().tick(duration)
   
   def tock(self):
     for i in self.components:

@@ -1,6 +1,7 @@
 import json
 import time
 import physics
+import struct
 
 class VectorEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -19,6 +20,8 @@ class SocketNetworker:
         print("N >>>", data)
         try:
             out = json.dumps(data, cls=VectorEncoder, separators=(',',':')).encode('UTF-8')
+
+            self.socket.sendall(struct.pack('!I', len(out)))
             self.socket.sendall(out)
             return True
         except Exception as e:
@@ -38,11 +41,26 @@ class SocketNetworker:
             else:
                 time.sleep(10)
 
+    def recvall(self, count):
+        """
+    Credit to: 
+        http://stupidpythonideas.blogspot.com/2013/05/sockets-are-byte-streams-not-message.html
+        """
+        buf = b''
+        while count:
+            newbuf = self.socket.recv(count)
+            if not newbuf: return None
+            buf += newbuf
+            count -= len(newbuf)
+        return buf
+
     def receive(self):
         while self.running:
             buf = None
             try:
-                buf = self.socket.recv(4096)
+                lenbuf = self.recvall(4)
+                length, = struct.unpack('!I', lenbuf)
+                buf = self.recvall(length)
             except Exception as e:
                 self.running = False
                 print("Error in receive!!!", e)

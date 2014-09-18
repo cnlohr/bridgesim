@@ -16,7 +16,7 @@ class SocketNetworker:
         self.running = False
 
     def send(self, data):
-        print("Trying to send data:", data)
+        print("N >>>", data)
         try:
             out = json.dumps(data, cls=VectorEncoder, separators=(',',':')).encode('UTF-8')
             self.socket.sendall(out)
@@ -32,6 +32,7 @@ class SocketNetworker:
         while self.running:
             data = self.receive()
             if data:
+                print("N <<<", data)
                 for listener in self.listeners:
                     listener(data)
             else:

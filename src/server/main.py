@@ -80,10 +80,6 @@ while True:
   pygame.display.flip()
   universe.collide()
   universe.tock()
-  for i in ship1.components:
-    if i.type == "WeaponsStation":
-      if i.loadStatus == "Loaded":
-        i.fire()
 #  print("Sleeping:", time.time()-last)
 #  time.sleep((1/frameRate)-(time.time()-last))
   

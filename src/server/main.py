@@ -11,6 +11,7 @@ import Missile
 import NetworkServer
 import os
 import ClientAPI
+import Client
 import SharedClientDataStore
 
 frameRate = 30
@@ -43,6 +44,7 @@ api.register(Component.Drive)
 api.register(Component.WeaponsStation)
 api.register(Component.ShieldGenerator)
 api.register(SharedClientDataStore.SharedClientDataStore)
+api.register(Client.ClientUpdater)
 
 print(api.getTable())
 

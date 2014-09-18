@@ -1,5 +1,6 @@
 import uuid
 import random
+from ClientAPI import BaseContext, expose
 
 ALL_KINDS = (
     "entity",
@@ -98,14 +99,30 @@ class Client:
 
     def destroy(self):
         self.sender.close()
-        self.server.clients.remove(self)
+        del self.server.clients[self.id]
 
     def sendUpdate(self):
         if self.updates:
+            self.updates['updates'] = True
             self.sender.send(self.updates)
         self.updates = {}
 
 class ClientUpdater:
+    class Context(BaseContext):
+        def __init__(self, instance=None, serial=None):
+            if instance:
+                self.client = instance.client.id
+            elif serial:
+                _, self.client = serial
+            else:
+                raise Exception("Context must be given instance or serial")
+
+        def instance(self, global_context):
+            return global_context.network.clients[self.client].updater
+
+        def serialize(self):
+            return ("ClientUpdater", self.client)
+
     def __init__(self, universe, client):
         self.universe = universe
         self.client = client
@@ -119,15 +136,15 @@ class ClientUpdater:
         # {"kind": <offset>}
         self.offsets = {}
 
-    # Expose to client
-    def flulSync(self):
+    @expose
+    def fullSync(self):
         self.sendUpdates(ALL_KINDS)
 
-    # Expose to client
+    @expose
     def stopUpdates(self, kind):
         self.clientWants[kind] = 0
 
-    # Expose to client
+    @expose
     def requestUpdates(self, kind, frequency):
         self.clientWants[kind] = frequency
         if kind not in self.offsets:

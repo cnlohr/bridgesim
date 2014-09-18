@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # Echo client program
+import threading
 import socket
 import sys
 from RemoteFunctionCaller import *
@@ -29,9 +30,11 @@ if s is None:
 nw = SocketNetworker(s)
 caller = RemoteFunctionCaller(nw)
 
+threading.Thread(target=nw.listen, daemon=True).start()
+
 try:
     print(caller.SharedClientDataStore__set("test", "success"))
-    print(caller.SharedClientDtaStore__get("test", default="failish"))
+    print(caller.SharedClientDataStore__get("test", default="failish"))
 except TimeoutError:
     print("Timed out.")
 

@@ -32,11 +32,12 @@ class Client:
             if "seq" in data:
                 clsName, funcName = data["op"].split('__', 2)
                 info = self.api.classes[clsName]
-                if funcName in info["methods"]:
-                    context = data.get("context", ())
-                    args = data.get("args", [])
-                    kwargs = data.get("kwargs", {})
+                context = data.get("context", ())
+                args = data.get("args", [])
+                kwargs = data.get("kwargs", {})
 
+                # handle method calls
+                if funcName in info["methods"]:
                     try:
                         result = self.api.onCall(clsName + "." + funcName,
                                                  context, *args, **kwargs)
@@ -47,12 +48,36 @@ class Client:
                         print(e)
                         self.sender.send({"result": None, "error": e, "seq": data["seq"]})
 
+                # handle setting properties
                 elif funcName in info["writable"] and len(data["args"]) == 1:
+                    try:
+                        result = self.api.onSet(clsName + "." + funcName,
+                                                context, *args)
+                        rDict = {"result": None, "seq": data["seq"]}
+                        rDict.update(result)
+                        self.sender.send(rDict)
+                    except Exception as e:
+                        print(e)
+                        self.sender.send({"result": None, "error": e, "seq": data["seq"]})
                     print("Client tried to set {} to {} in class {} -- IMPLEMENT ME".format(
                         funcName, data["args"][0], clsName))
 
+                # handle getting properties
                 elif funcName in info["readable"] and len(data["args"]) == 0:
-                    print("Client tried to get {} of class {} -- IMPLEMENT ME".format(data["args"][0], clsName))
+                    try:
+                        result = self.api.onGet(clsName + "." + funcName,
+                                                 context, *args, **kwargs)
+                        rDict = {"result": None, "seq": data["seq"]}
+                        rDict.update(result)
+                        self.sender.send(rDict)
+                    except Exception as e:
+                        print(e)
+                        self.sender.send({"result": None, "error": e, "seq": data["seq"]})
+                    print("Client tried to get {} of class {} -- IMPLEMENT ME".format(funcName, clsName))
+                # unavailable function?
+                else:
+                    print("Client tried to do {}.{}. Returning error.")
+                    self.sender.send({"result": None, "error": "Operation not found", "seq": data["seq"]})
             else:
                 print("Warning: received command without seq")
         else:

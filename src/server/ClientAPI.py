@@ -80,7 +80,10 @@ class ClientAPI:
         context = classInfo["context"]
         instance = context(serial=ctx).instance(self.globalContext)
 
-        return getattr(instance, attr, None)
+        result = getattr(instance, attr, None)
+        if hasattr(result, 'Context'):
+            return {"result": result, "context": result.Context(instance=result)}
+        return {"result": result}
 
     def onSet(self, name, ctx, value):
         cls, attr = name.split(".")
@@ -95,9 +98,12 @@ class ClientAPI:
         setattr(instance, attr, value)
 
         if attr in classInfo["readable"]:
-            return getattr(instance, attr)
+            result = getattr(instance, attr)
         else:
-            return None
+            result = None
+        if hasattr(result, 'Context'):
+            return {"result": result, "context": result.Context(instance=result)}
+        return {"result": result}
 
     def onCall(self, name, ctx, *args, **kwargs):
         cls, func = name.split(".")

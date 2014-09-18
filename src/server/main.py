@@ -64,6 +64,10 @@ for i in ship1.components.values():
 
 screen.fill((255,255,255))
 
+universe.tick(5)
+universe.collide()
+universe.tock()
+
 last = time.time()
 while True:
 #  data = universe.tick(time.time()-last)

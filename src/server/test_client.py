@@ -35,6 +35,10 @@ threading.Thread(target=nw.listen, daemon=True).start()
 try:
     print(caller.SharedClientDataStore__set("test", "success"))
     print(caller.SharedClientDataStore__get("test", default="failish"))
+    print(caller.ShieldGenerator__enable(context=("Component", 0, 1, 3)))
+    print("Press any key to make ship go boom . . .")
+    input()
+    print(caller.WeaponsStation__fire(context=("Component", 0, 0, 2)))
 except TimeoutError:
     print("Timed out.")
 

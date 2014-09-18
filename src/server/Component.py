@@ -138,6 +138,7 @@ class WeaponsStation(Component):
             if self.loadTime <= 0:
                 print("Tube is loaded")
                 self.loadStatus = "Loaded"
+                print("LOADED")
 
         if self.loadStatus == "Unloading":
             self.loadTime += duration * self.energy

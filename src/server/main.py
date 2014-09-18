@@ -48,7 +48,9 @@ print(api.getTable())
 network.start(api)
 
 ship1 = Ship.Ship(shipConf, universe)
+ship1.name = "Aggressor"
 ship2 = Ship.Ship(shipConf, universe)
+ship2.name = "Victim"
 ship1.location = physics.Vector(5000,1000,0)
 ship2.location = physics.Vector(1000,1000,0)
 ship2.rotation = physics.Vector(0,0,0)

@@ -23,12 +23,16 @@ class Ship(Entity):
       temp[comp.id] = comp
       self.energySupply[comp] = 1
     self.components = temp
+    self.name = ""
     
   def collide(self, other):
     print("I got hit!")
     if type(other) is Missile:
       self.takeDamage(other.getDamage())
       
+  def getID(self):
+    return self.name
+
   def takeDamage(self, damage):
     print("I'm hit!", damage)
     for i in self.components.values():

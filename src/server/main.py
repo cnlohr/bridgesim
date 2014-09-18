@@ -22,6 +22,7 @@ with open("../data/weapons.json", 'r') as missileConfFile:
 missileConf = missileConf['weapons']['nuke']
 
 pygame.init()
+basicFont = pygame.font.SysFont(None, 24)
 size = width, height = 6400,4800
 SCALEFACTOR = 640/width
 screen = pygame.display.set_mode((int(width*SCALEFACTOR), int(height*SCALEFACTOR)))
@@ -78,7 +79,12 @@ while True:
   screen.fill((255,255,255))
   for i in data:
 #    print(int(i[0]*SCALEFACTOR),int(i[1]*SCALEFACTOR))
-    pygame.draw.circle(screen, (0,0,0), (int((i[0]-i[2])*SCALEFACTOR),int((i[1]-i[2])*SCALEFACTOR)), int(i[2]*SCALEFACTOR))
+    pygame.draw.circle(screen, i[4], (int((i[0]-i[2])*SCALEFACTOR),int((i[1]-i[2])*SCALEFACTOR)), int(i[2]*SCALEFACTOR))
+    text = basicFont.render(i[3], True, (0,0,0))
+    textRect = text.get_rect()
+    textRect.centerx = int((i[0]-i[2])*SCALEFACTOR)
+    textRect.centery = int((i[1]-i[2])*SCALEFACTOR)-15
+    screen.blit(text, textRect)
   pygame.display.flip()
   universe.collide()
   universe.tock()

@@ -1,5 +1,6 @@
 import math
 import physics
+import random
 from ClientAPI import BaseContext, readable
 
 @readable('location', 'rotation', 'velocity', 'universe', 'radius', 'mass')
@@ -26,6 +27,7 @@ class Entity:
     self.universe = universe
     self.radius = radius
     self.mass = mass
+    self.color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
   
   def getID(self):
     return self.id
@@ -45,7 +47,7 @@ class Entity:
   
   def tick(self, duration):
     self.location += self.velocity*duration
-    return self.location[0], self.location[1], self.radius
+    return self.location[0], self.location[1], self.radius, self.getID(), self.color
 
   def tock(self):
     return

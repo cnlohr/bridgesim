@@ -37,7 +37,6 @@ class Client:
                     args = data.get("args", [])
                     kwargs = data.get("kwargs", {})
 
-                    print("call {}.{}({}, {})".format(clsName, funcName, ', '.join(args), ', '.join(['='.join(a) for a in kwargs.items()])))
                     try:
                         result = self.api.onCall(clsName + "." + funcName,
                                                  context, *args, **kwargs)

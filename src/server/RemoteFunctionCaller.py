@@ -15,12 +15,13 @@ class RemoteFunction:
         self.timeoutCb = timeoutCb
         self.result = None
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args, context=None, **kwargs):
         obj = {
             "seq": self.seq,
             "op": self.name,
             "args": args,
-            "kwargs": kwargs
+            "kwargs": kwargs,
+            "context": context
         }
 
         self.sender.send(obj)

@@ -57,7 +57,7 @@ universe.add(ship2)
 
 missile = Missile.Missile(missileConf, universe)
 
-for i in ship1.components:
+for i in ship1.components.values():
   if i.type == "WeaponsStation":
     i.energy = 1
     i.load(missile)

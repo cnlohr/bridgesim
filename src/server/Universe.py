@@ -16,7 +16,7 @@ class Universe:
       return global_context.universes[self.id]
 
   def __init__(self, size=(100000000, 100000000)):
-    self.entities = []
+    self.entities = {}
     self.height = size[1]
     self.width = size[0]
     self.teams = []
@@ -25,31 +25,31 @@ class Universe:
     self.maxID = 0
     
   def add(self, entity):
-    self.maxID += 1
     entity.id = self.maxID
-    self.entities.append(entity)
+    self.maxID += 1
+    self.entities[entity.id] = entity
     
   def remove(self, entity):
-    self.entities.remove(entity)
+    del self.entities[entity.id]
     
   # Time passes and position updates during tick
   def tick(self, duration):
     data = []
-    for i in self.entities:
+    for i in self.entities.values():
       data.append(i.tick(duration))
     return data
       
   # Position changed, so check for collisions
   def collide(self):
-    for i in self.entities:
-      for j in self.entities:
+    for i in list(self.entities.values()):
+      for j in list(self.entities.values()):
         if i != j:
           if i.checkCollide(j):
             i.collide(j)
           
   # Now that damage is dealt in collisions, destroy objects and update logic
   def tock(self):
-    for i in self.entities:
+    for i in list(self.entities.values()):
       i.tock()
 
     # This is just things that need to be ticked, in general

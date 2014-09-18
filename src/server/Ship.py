@@ -1,8 +1,9 @@
 from Entity import Entity
 from Component import *
 from Missile import Missile
-import sys
+from ClientAPI import writable
 
+@writable('name')
 class Ship(Entity):
   def __init__(self, config, universe):
     super().__init__(config, universe)

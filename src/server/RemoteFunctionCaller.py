@@ -64,7 +64,7 @@ class RemoteFunctionCaller:
         if "seq" in data:
             if data["seq"] in self.calls:
                 self.calls[data["seq"]].result = data
-                self.calls.remove(data["seq"])
+                del data["seq"]
 
     def destroy(self):
         self.sender.close()

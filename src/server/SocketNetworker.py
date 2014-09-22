@@ -59,6 +59,8 @@ class SocketNetworker:
             buf = None
             try:
                 lenbuf = self.recvall(4)
+                if not lenbuf:
+                    continue
                 length, = struct.unpack('!I', lenbuf)
                 buf = self.recvall(length)
             except Exception as e:

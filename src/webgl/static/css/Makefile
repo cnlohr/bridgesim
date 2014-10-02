@@ -2,16 +2,19 @@ CSS_TARGETS := index.min.css index.css common/fullwindow_canvas.min.css common/f
 
 all: $(CSS_TARGETS)
 
-FULLWINDOW_CANVAS_DEPS := common/fullwindow_canvas.gss
+FULLWINDOW_CANVAS_DEPS := common/fullwindow_canvas.less
 common/fullwindow_canvas.css: $(FULLWINDOW_CANVAS_DEPS)
-	closure-stylesheets --pretty-print -o $@ $^
+	lessc $(COMPILER_FLAGS) $< $@
 
 common/fullwindow_canvas.min.css: $(FULLWINDOW_CANVAS_DEPS)
-	closure-stylesheets -o $@ $^
+	lessc $(COMPILER_FLAGS) -x $< $@
 
-INDEX_DEPS := index.gss common/fullwindow_canvas.gss
+INDEX_DEPS := index.less common/fullwindow_canvas.less
 index.css: $(INDEX_DEPS)
-	closure-stylesheets --pretty-print -o $@ $^
+	lessc $(COMPILER_FLAGS) $< $@
 
 index.min.css: $(INDEX_DEPS)
-	closure-stylesheets -o $@ $^
+	lessc $(COMPILER_FLAGS) -x $< $@
+
+clean:
+	rm $(CSS_TARGETS)

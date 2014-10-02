@@ -1,5 +1,16 @@
-<html>
-  <body>
-    <p>Hi</p>
-  </body>
-</html>
+{% extends "full_canvas_base.html" %}
+
+{% block header_includes %}
+  {% if config.DEBUG %}
+    <script src="{{ url_for("static", filename="js/three/three.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/three/OBJLoader.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/index.js") }}"></script>
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/index.css") }}" />
+  {% else %}
+    <script src="{{ url_for("static", filename="js/index.min.js") }}"></script>
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/index.min.css") }}" />
+  {% endif %}
+{% endblock header_includes %}
+
+{% block overlay_body %}
+{% endblock overlay_body %}

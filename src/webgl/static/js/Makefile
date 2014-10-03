@@ -2,7 +2,7 @@ JS_TARGETS := index.min.js three/three.min.js
 
 THREE := three/three.js three/OBJLoader.js
 
-COMPILE_FLAGS=--compilation_level ADVANCED_OPTIMIZATIONS --language_in ECMASCRIPT5_STRICT --jscomp_off=globalThis --jscomp_off=checkTypes
+COMPILE_FLAGS=--compilation_level SIMPLE --language_in ECMASCRIPT5 --jscomp_off=globalThis --jscomp_off=checkTypes
 
 all: $(JS_TARGETS)
 

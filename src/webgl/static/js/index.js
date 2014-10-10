@@ -13,6 +13,7 @@ $(document).ready(function() {
   animate();
 });
 
+
 function init() {
 	camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
 	camera.position.z = 50;
@@ -85,8 +86,8 @@ function render() {
 
 	camera.lookAt(scene.position);
 
-  if(spin)
-    ship.rotation.y += .01;
+  if(spin);
+    //ship.rotation.y += .01;
 
 	renderer.render(scene, camera);
 }

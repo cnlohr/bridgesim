@@ -8,34 +8,32 @@ function SocketWrapper(socket) {
 
     socket.onopen = function(evt) {
 	// APPARENTLY, this is now socket.this
-	for (var l in wrap.onOpens) {
+	for (var l in wrap.onOpens.slice(0)) {
 	    wrap.onOpens[l](evt);
 	}
     }
 
     socket.onmessage = function(evt) {
-	for (var l in wrap.onMessages) {
+	for (var l in wrap.onMessages.slice(0)) {
 	    wrap.onMessages[l](JSON.parse(atob(evt.data)));
 	}
     }
 
     socket.onerror = function(evt) {
-	for (var l in wrap.onErrors) {
+	for (var l in wrap.onErrors.slice(0)) {
 	    wrap.onErrors[l](evt);
 	}
     }
 
     socket.onclose = function(evt) {
-	for (var l in wrap.onCloses) {
+	for (var l in wrap.onCloses.slice(0)) {
 	    wrap.onCloses[l](evt);
 	}
     }
 }
 
 SocketWrapper.prototype.addOnOpen = function(cb) {
-    console.log("Adding an onOpen...");
     this.onOpens.push(cb);
-    console.log("Added! (" + this.onOpens.length + ")");
 }
 
 SocketWrapper.prototype.addOnMessage = function(cb) {
@@ -62,7 +60,22 @@ function RemoteFunction(socket, seq, name, callback, timeoutCallback) {
     this.callback = callback;
     this.timeoutCallback = timeoutCallback;
     this.completed = false;
+    this.boundMethod = null;
 }
+
+RemoteFunction.prototype.listener = function(data) {
+    if (data && "seq" in data) {
+	if (data.seq == this.seq) {
+	    clearTimeout(this.timer);
+	    this.complete = true;
+	    this.callback(data);
+
+	    // if we leave this around we get exponential calls, oops
+	    var ourIndex = this.socket.onMessages.indexOf(this.boundMethod);
+	    delete this.socket.onMessages[ourIndex];
+	}
+    }
+};
 
 RemoteFunction.prototype.call = function(context) {
     var data = {
@@ -70,24 +83,14 @@ RemoteFunction.prototype.call = function(context) {
 	"op": this.name,
 	"args": Array.slice(arguments, 1),
 	"kwargs": {},
-	"context": this.context
+	"context": context
     };
 
     var theese = this;
 
-    this.socket.addOnMessage(function(data) {
-	if (data) {
-	    console.log("data is:");
-	    console.log(data);
-	    if ("seq" in data) {
-		if (data["seq"] == theese.seq) {
-		    clearTimeout(theese.timer);
-		    theese.complete = true;
-		    theese.callback(data);
-		}
-	    }
-	}
-    });
+    this.boundMethod = function(data){theese.listener(data);};
+    this.socket.addOnMessage(this.boundMethod);
+
     this.socket.send(data);
     // All functions will have a 5 second timeout I guess
     if (this.callback) {
@@ -126,7 +129,7 @@ $(function() {
     window.client.init(new SocketWrapper(new WebSocket("ws://" + location.hostname + ":" + (parseInt(location.port) + 1), ['base64', 'binary'])));
 
     window.client.socket.addOnOpen(function(evt) { console.log("WebSocket is open!"); registerWithServer();});
-    window.client.socket.addOnMessage(function(data) { console.log(data); });
+    //window.client.socket.addOnMessage(function(data) { console.log(data); });
 });
 
 function registerWithServer() {

@@ -52,8 +52,7 @@ except:
 # Degraded functionality if these imports are missing
 for mod, msg in [('numpy', 'HyBi protocol will be slower'),
                  ('ssl', 'TLS/SSL/wss is disabled'),
-                 ('multiprocessing', 'Multi-Processing is disabled'),
-                 ('resource', 'daemonizing is disabled')]:
+                 ('multiprocessing', 'Multi-Processing is disabled')]:
     try:
         globals()[mod] = __import__(mod)
     except ImportError:
@@ -76,7 +75,6 @@ class WebSocketRequestHandler(SimpleHTTPRequestHandler):
     * only_upgrade: If true, SimpleHTTPRequestHandler will not be enabled,
       only websocket is allowed.
     * verbose: If true, verbose logging is activated.
-    * daemon: Running as daemon, do not write to console etc
     * record: Record raw frame data as JavaScript array into specified filename
     * run_once: Handle a single request
     * handler_id: A sequence number for this connection, appended to record filename
@@ -97,7 +95,6 @@ class WebSocketRequestHandler(SimpleHTTPRequestHandler):
         # Retrieve a few configuration variables from the server
         self.only_upgrade = getattr(server, "only_upgrade", False)
         self.verbose = getattr(server, "verbose", False)
-        self.daemon = getattr(server, "daemon", False)
         self.record = getattr(server, "record", False)
         self.run_once = getattr(server, "run_once", False)
         self.rec        = None
@@ -561,13 +558,13 @@ class WebSocketServer(object):
         pass
 
     def __init__(self, RequestHandlerClass, listen_host='',
-                 listen_port=None, source_is_ipv6=False,
+                 listen_port=8553, source_is_ipv6=False,
             verbose=False, cert='', key='', ssl_only=None,
-            daemon=False, record='', web='',
+            record='', web='',
             file_only=False,
             run_once=False, timeout=0, idle_timeout=0, traffic=False,
             tcp_keepalive=True, tcp_keepcnt=None, tcp_keepidle=None,
-            tcp_keepintvl=None):
+                 tcp_keepintvl=None, config=None, universe=None):
 
         # settings
         self.RequestHandlerClass = RequestHandlerClass
@@ -576,7 +573,6 @@ class WebSocketServer(object):
         self.listen_port    = listen_port
         self.prefer_ipv6    = source_is_ipv6
         self.ssl_only       = ssl_only
-        self.daemon         = daemon
         self.run_once       = run_once
         self.timeout        = timeout
         self.idle_timeout   = idle_timeout
@@ -609,8 +605,6 @@ class WebSocketServer(object):
         # Sanity checks
         if not ssl and self.ssl_only:
             raise Exception("No 'ssl' module and SSL-only specified")
-        if self.daemon and not resource:
-            raise Exception("Module 'resource' required to daemonize")
 
         # Show configuration
         self.msg("WebSocket server settings:")
@@ -628,8 +622,6 @@ class WebSocketServer(object):
                 self.msg("  - No SSL/TLS support (no cert file)")
         else:
             self.msg("  - No SSL/TLS support (no 'ssl' module)")
-        if self.daemon:
-            self.msg("  - Backgrounding (daemon)")
         if self.record:
             self.msg("  - Recording to '%s.*'", self.record)
 
@@ -698,41 +690,6 @@ class WebSocketServer(object):
             sock.connect(unix_socket)
 
         return sock
-
-    @staticmethod
-    def daemonize(keepfd=None, chdir='/'):
-        os.umask(0)
-        if chdir:
-            os.chdir(chdir)
-        else:
-            os.chdir('/')
-        os.setgid(os.getgid())  # relinquish elevations
-        os.setuid(os.getuid())  # relinquish elevations
-
-        # Double fork to daemonize
-        if os.fork() > 0: os._exit(0)  # Parent exits
-        os.setsid()                    # Obtain new process group
-        if os.fork() > 0: os._exit(0)  # Parent exits
-
-        # Signal handling
-        signal.signal(signal.SIGTERM, signal.SIG_IGN)
-        signal.signal(signal.SIGINT, signal.SIG_IGN)
-
-        # Close open files
-        maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
-        if maxfd == resource.RLIM_INFINITY: maxfd = 256
-        for fd in reversed(range(maxfd)):
-            try:
-                if fd != keepfd:
-                    os.close(fd)
-            except OSError:
-                _, exc, _ = sys.exc_info()
-                if exc.errno != errno.EBADF: raise
-
-        # Redirect I/O to /dev/null
-        os.dup2(os.open(os.devnull, os.O_RDWR), sys.stdin.fileno())
-        os.dup2(os.open(os.devnull, os.O_RDWR), sys.stdout.fileno())
-        os.dup2(os.open(os.devnull, os.O_RDWR), sys.stderr.fileno())
 
     def do_handshake(self, sock, address):
         """
@@ -843,28 +800,6 @@ class WebSocketServer(object):
     def terminate(self):
         raise self.Terminate()
 
-    def multiprocessing_SIGCHLD(self, sig, stack):
-        self.vmsg('Reaping zombies, active child count is %s', len(multiprocessing.active_children()))
-
-    def fallback_SIGCHLD(self, sig, stack):
-        # Reap zombies when using os.fork() (python 2.4)
-        self.vmsg("Got SIGCHLD, reaping zombies")
-        try:
-            result = os.waitpid(-1, os.WNOHANG)
-            while result[0]:
-                self.vmsg("Reaped child process %s" % result[0])
-                result = os.waitpid(-1, os.WNOHANG)
-        except (OSError):
-            pass
-
-    def do_SIGINT(self, sig, stack):
-        self.msg("Got SIGINT, exiting")
-        self.terminate()
-
-    def do_SIGTERM(self, sig, stack):
-        self.msg("Got SIGTERM, exiting")
-        self.terminate()
-
     def top_new_client(self, startsock, address):
         """ Do something with a WebSockets client connection. """
         # handler process        
@@ -904,26 +839,7 @@ class WebSocketServer(object):
                             tcp_keepidle=self.tcp_keepidle,
                             tcp_keepintvl=self.tcp_keepintvl)
 
-        if self.daemon:
-            self.daemonize(keepfd=lsock.fileno(), chdir=self.web)
-
         self.started()  # Some things need to happen after daemonizing
-
-        # Allow override of signals
-        original_signals = {
-            signal.SIGINT: signal.getsignal(signal.SIGINT),
-            signal.SIGTERM: signal.getsignal(signal.SIGTERM),
-            signal.SIGCHLD: signal.getsignal(signal.SIGCHLD),
-        }
-        signal.signal(signal.SIGINT, self.do_SIGINT)
-        signal.signal(signal.SIGTERM, self.do_SIGTERM)
-        if not multiprocessing:
-            # os.fork() (python 2.4) child reaper
-            signal.signal(signal.SIGCHLD, self.fallback_SIGCHLD)
-        else:
-            # make sure that _cleanup is called when children die
-            # by calling active_children on SIGCHLD
-            signal.signal(signal.SIGCHLD, self.multiprocessing_SIGCHLD)
 
         last_active_time = self.launch_time
         try:
@@ -1022,9 +938,4 @@ class WebSocketServer(object):
             self.vmsg("Closing socket listening at %s:%s",
                       self.listen_host, self.listen_port)
             lsock.close()
-
-            # Restore signals
-            for sig, func in original_signals.items():
-                signal.signal(sig, func)
-
 

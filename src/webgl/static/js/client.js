@@ -142,7 +142,7 @@ $(function() {
 
     $("#test-btn").click(function() {
 	window.client.call("SharedClientDataStore__set", ["GlobalContext"], function(res) {
-	    $("#result-text").val(res.result ? "OK!" : "Failed");
+	    $("#result-text").val(res.result[0] ? ("OK: " + res.result[1]) : "Failed");
 	}, {"key": "shipName", "value": prompt("Ship Name")});
     });
 });

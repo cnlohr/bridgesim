@@ -36,8 +36,8 @@ class SharedClientDataStore:
                 self.__data[key] = value
                 if ro:
                     self.readonly.append(key)
-                return True
-        return False
+                return (True, value)
+        return (False, None)
 
     @expose
     def setIfMissing(self, key, value, ro=False):
@@ -47,5 +47,5 @@ class SharedClientDataStore:
 
                 if ro:
                     self.readonly.append(key)
-                return True
-        return False
+                return (True, value)
+        return (False, None)

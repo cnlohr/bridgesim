@@ -99,6 +99,8 @@
 
 		wsInitString = '{"args": ["entity", 10], "kwargs": {}, "op": "ClientUpdater__requestUpdates", "seq": 1 }';
 		StartWebSocket();
+
+		AttachMouseWheel(); 
 	}
 
 	cwg.trace( "Loaded." );
@@ -114,7 +116,7 @@
 
 	rootperspective = new CNGLCreatePerspectiveNode( cwg, "RootPerspective" );
 	rootperspective.near = 1;
-	rootperspective.far = 5000;
+	rootperspective.far = 10000;
 	rt.children.push( rootperspective);
 
 
@@ -206,6 +208,28 @@ function fsmm( e )
 	document.getElementById( "status" ).value =  movementX + " " + movementY;
 }
 
+
+//Zoom in/out
+
+function mousewheelhandlerroot(e){
+    var evt=window.event || e;
+    var delta=evt.detail? evt.detail*(-120) : evt.wheelDelta;
+    var direction = (delta<=-120)?1:-1;
+
+	MouseWheelEvent( direction );
+}
+
+function AttachMouseWheel()
+{
+	var mousewheelevt=(/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel" //FF doesn't recognize mousewheel as of FF3.x
+
+	var canv = document.getElementById("example");
+
+	if (canv.attachEvent) //if IE (and Opera depending on user setting)
+		canv.attachEvent("on"+mousewheelevt, mousewheelhandlerroot)
+	else if (canv.addEventListener) //WC3 browsers
+		canv.addEventListener(mousewheelevt, mousewheelhandlerroot, false)
+}
 
 </script>
 </head>

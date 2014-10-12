@@ -5,6 +5,9 @@ var gEntitiesID = new Array;  //Arbitrary list of all server IDs
 var gDisplayables = new Array; //index into this with server ID
 var gCurrentCameraEye = [10, 10, 10];
 var gCurrentCameraAt = [0, 0, 0];
+var gCurrentCameraUp = [0, 0, 1];
+var gCameraFOV = 45;
+var gCameraFOVTarget = 45; //Change this for smooth motion.
 var rootperspective;
 
 function AddNewObjectDISP( serverID, objparams )
@@ -115,6 +118,13 @@ function WSUpdate()
 	}
 }
 
+function MouseWheelEvent( direction )
+{
+	if( gCameraFOVTarget < 90 && direction > 0)
+		gCameraFOVTarget++;
+	if( gCameraFOVTarget > 1 && direction < 0)
+		gCameraFOVTarget--;
+}
 
 //Called every frame.
 function GameUpdate()
@@ -140,38 +150,69 @@ function GameUpdate()
 	var objf = null; if( vfi >= 0 ) objf = gEntities[vfi];
 	var objt = null; if( vti >= 0 ) objt = gEntities[vti];
 
+	//For smooth motion
+	var slk = .9;
+	var islk = 1.-slk;
+
+	var targ = gCurrentCameraAt;
+	var targeye = gCurrentCameraEye;
+	var targup = gCurrentCameraUp;
+
 	if( objf == null && objt != null )
 	{
-		var targ = objt.loc.slice(0);
-		var targeye = [ targ[0] + 100, targ[1] + 100, targ[2] + 100 ];
-
-		var slk = .9;
-		var islk = 1.-slk;
-
-		gCurrentCameraEye[0] = gCurrentCameraEye[0] * slk + targeye[0] * islk;
-		gCurrentCameraEye[1] = gCurrentCameraEye[1] * slk + targeye[1] * islk;
-		gCurrentCameraEye[2] = gCurrentCameraEye[2] * slk + targeye[2] * islk;
-
-		gCurrentCameraAt[0] = gCurrentCameraAt[0] * slk + targ[0] * islk;
-		gCurrentCameraAt[1] = gCurrentCameraAt[1] * slk + targ[1] * islk;
-		gCurrentCameraAt[2] = gCurrentCameraAt[2] * slk + targ[2] * islk;
-
-		//Move the camera to the object.
-		rootperspective.at[0] = gCurrentCameraAt[0];
-		rootperspective.at[1] = gCurrentCameraAt[1];
-		rootperspective.at[2] = gCurrentCameraAt[2];
-
-		rootperspective.eye[0] = gCurrentCameraEye[0];
-		rootperspective.eye[1] = gCurrentCameraEye[1];
-		rootperspective.eye[2] = gCurrentCameraEye[2];
-
-		rootperspective.up[0] = 0;
-		rootperspective.up[1] = 0;
-		rootperspective.up[2] = 1;
-
-		rootperspective.angle = 45;
-
+		targ = objt.loc.slice(0);
+		targeye = [ targ[0] + 100, targ[1] + 100, targ[2] + 100 ];
+		targup = [0, 0, 1];
 	}
+	if( objf == null && objt == null )
+	{
+		targ = [ 0, 0, 0];
+		targeye = [0, 0, 7000];
+		targup = [0, 1, 0];
+	}
+	if( objf != null && objt != null )
+	{
+		targ = objt.loc;
+		targeye = objf.loc;
+		targup = [0, 0, 1];
+
+		//Tricky, we hide the objf so it's not in our face.
+		var su = gDisplayables[vfi];
+		su.children[0].matrix.scale( 0, 0, 0 );
+	}
+	if( objf != null && objt == null )
+	{
+		//free look... Not sure how to do this.
+	}
+
+	gCurrentCameraEye[0] = gCurrentCameraEye[0] * slk + targeye[0] * islk;
+	gCurrentCameraEye[1] = gCurrentCameraEye[1] * slk + targeye[1] * islk;
+	gCurrentCameraEye[2] = gCurrentCameraEye[2] * slk + targeye[2] * islk;
+
+	gCurrentCameraAt[0] = gCurrentCameraAt[0] * slk + targ[0] * islk;
+	gCurrentCameraAt[1] = gCurrentCameraAt[1] * slk + targ[1] * islk;
+	gCurrentCameraAt[2] = gCurrentCameraAt[2] * slk + targ[2] * islk;
+
+	gCurrentCameraUp[0] = gCurrentCameraUp[0] * slk + targup[0] * islk;
+	gCurrentCameraUp[1] = gCurrentCameraUp[1] * slk + targup[1] * islk;
+	gCurrentCameraUp[2] = gCurrentCameraUp[2] * slk + targup[2] * islk;
+
+
+	//Move the camera to the object.
+	rootperspective.at[0] = gCurrentCameraAt[0];
+	rootperspective.at[1] = gCurrentCameraAt[1];
+	rootperspective.at[2] = gCurrentCameraAt[2];
+
+	rootperspective.eye[0] = gCurrentCameraEye[0];
+	rootperspective.eye[1] = gCurrentCameraEye[1];
+	rootperspective.eye[2] = gCurrentCameraEye[2];
+
+	rootperspective.up[0] = gCurrentCameraUp[0];
+	rootperspective.up[1] = gCurrentCameraUp[1];
+	rootperspective.up[2] = gCurrentCameraUp[2];
+
+	gCameraFOV = gCameraFOV * slk + gCameraFOVTarget * islk;
+	rootperspective.angle = gCameraFOV;
 }
 
 

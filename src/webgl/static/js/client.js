@@ -146,11 +146,11 @@ $(function() {
     });
 
     $("#update-enable").change(function() {
-	window.client.call("ClientUpdater__requestUpdates", ["ClientUpdater", 0], function(res) {}, {}, "entity", this.checked ? $("#update-freq").val() : 0);
+	window.client.call("ClientUpdater__requestUpdates", ["ClientUpdater", 0], function(res) {}, {}, "entity", this.checked ? parseInt($("#update-freq").val()) : 0);
     });
     $("#update-freq").change(function() {
 	if ($("#update-enable").prop("checked")) {
-	    window.client.call("ClientUpdater__requestUpdates", ["ClientUpdater", 0], function(res) {}, {}, "entity", $(this).val());
+	    window.client.call("ClientUpdater__requestUpdates", ["ClientUpdater", 0], function(res) {}, {}, "entity", parseInt($(this).val()));
 	}
     });
 });

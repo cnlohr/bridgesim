@@ -139,6 +139,12 @@ $(function() {
 
     window.client.socket.addOnOpen(function(evt) { console.log("WebSocket is open!"); registerWithServer();});
     //window.client.socket.addOnMessage(function(data) { console.log(data); });
+
+    $("#test-btn").click(function() {
+	window.client.call("SharedClientDataStore__set", ["GlobalContext"], function(res) {
+	    $("#result-text").val(res.result ? "OK!" : "Failed");
+	}, {"key": "shipName", "value": prompt("Ship Name")});
+    });
 });
 
 function registerWithServer() {

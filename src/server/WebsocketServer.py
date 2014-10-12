@@ -36,16 +36,17 @@ class ClientHandler(WebSocket):
         self.universe.updaters.append(updater)
 
     def opened(self):
-#        self.send(str({"id": self.client.id}))
-        self.send(b'0', binary=True)
+        print("Test send")
 
     def received_message(self, message):
+        print(">>>", message)
+        self.send(str({"id": self.client.id}))
         for i in self.listeners:
             i(message)
  
 class NetworkServer:
     def __init__(self, config, universe):
-        self.port = 8553
+        self.port = 9000
         self.__dict__.update(config)
         self.universe = universe
         ClientHandler.universe = universe

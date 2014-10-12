@@ -9,7 +9,7 @@ from SocketNetworker import SocketNetworker
 from UpdateReceiver import UpdateReceiver
 
 HOST = 'localhost'    # The remote host
-PORT = 8553           # The same port as used by the server
+PORT = 9000           # The same port as used by the server
 s = None
 for res in socket.getaddrinfo(HOST, PORT, socket.AF_UNSPEC, socket.SOCK_STREAM):
     af, socktype, proto, canonname, sa = res

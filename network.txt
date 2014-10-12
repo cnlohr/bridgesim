@@ -2,3 +2,14 @@ The network uses json objects over a network socket or a websocket.
 
 To request updates about all entity positions every 30 ticks:
 {"args": ["entity", 1000], "kwargs": {}, "op": "ClientUpdater__requestUpdates", "seq": 1, "context": ["ClientUpdater", 0]}
+
+
+Entities have:
+rot
+pos
+vel
+id
+Can they have:
+name (Human-readable, display name)
+visual (JSON or string describing how to display, model name, texture, scale, any other properties, can be JSON or not.)
+

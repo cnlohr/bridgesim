@@ -91,7 +91,7 @@ RemoteFunction.prototype.call = function(context, kwargs) {
     var data = {
 	"seq": this.seq,
 	"op": this.name,
-	"args": Array.slice(arguments, 2),
+	"args": Array.prototype.slice.call(arguments, 2),
 	"kwargs": kwargs,
 	"context": context
     };
@@ -128,7 +128,7 @@ window.client = {
     call: function(name, context, callback, kwargs) {
 	var tmpSeq = ++this.seq;
 	var rf = new RemoteFunction(this.socket, tmpSeq, name, callback, null);
-	var newArgs = [context, kwargs].concat(Array.slice(arguments, 4));
+	var newArgs = [context, kwargs].concat(Array.prototype.slice.call(arguments, 4));
 	rf.call.apply(rf, newArgs);
     }
 }

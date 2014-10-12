@@ -78,8 +78,8 @@ universe.tock()
 
 last = time.time()
 while True:
-#  data = universe.tick(time.time()-last)
-  data = universe.tick(.03)
+  data = universe.tick(time.time()-last)
+#  data = universe.tick(.03)
   last = time.time()
   if "-v" in sys.argv:
     screen.fill((255,255,255))
@@ -94,5 +94,5 @@ while True:
   universe.collide()
   universe.tock()
 #  print("Sleeping:", time.time()-last)
-#  time.sleep((1/frameRate)-(time.time()-last))
+  time.sleep((1/frameRate)-(time.time()-last))
   

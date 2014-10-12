@@ -54,6 +54,8 @@ class Ship(Entity):
     for i in self.components.values():
       i.energy = factor * duration * self.energySupply[i] * needed[i]
       i.tick(duration)
+      if type(i) == Drive:
+        self.thrustVectors[i.id] = (i.orientation, i.position, i.thrustVector)
     return super().tick(duration)
   
   def tock(self):

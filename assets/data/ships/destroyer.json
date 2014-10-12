@@ -1,5 +1,6 @@
 { "name": "Destroyer",
   "maxEnergy": 200000,
+  "model": "destroyer.obj",
   "components": [
       { "type": "CrewStation",
 	"model": "ball",

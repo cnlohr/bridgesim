@@ -36,6 +36,7 @@ class VectorEncoder(json.JSONEncoder):
 class ClientHandler(WebSocket):
     clients = {}
     def __init__(self, *args, **kwargs):
+        self.failed = 0
         self.idsent = False
         super().__init__(*args, **kwargs)
         self.listeners = []
@@ -55,7 +56,10 @@ class ClientHandler(WebSocket):
             encodeddata = json.dumps(data, cls=VectorEncoder, separators=(',',':')).encode('UTF-8')
             super().send(encodeddata)
         except:
+            self.failed += 1
             print("Send Failed")
+            if self.failed > 10:
+                raise OSError("Error updating client "+str(self.client.id)+", destroying")
 
     def received_message(self, message):
         try:

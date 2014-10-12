@@ -62,7 +62,7 @@ class ClientHandler(WebSocket):
             print(">>>", message.data)
             if not(self.idsent):
                 self.idsent = True
-                self.send({"id": self.client.id})
+                self.send(json.dumps({"id": self.client.id}, cls=VectorEncoder, separators=(',',':')).encode('UTF-8'))
             print(self.listeners)
             for i in self.listeners:
                 print("Handling Message")

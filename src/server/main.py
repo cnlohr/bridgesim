@@ -14,7 +14,7 @@ import Client
 import SharedClientDataStore
 import sys
 
-frameRate = 30
+frameRate = 100
 
 with open("../../assets/data/ships/destroyer.json", 'r') as shipConfFile:
   shipConf = json.load(shipConfFile)
@@ -78,7 +78,10 @@ universe.tock()
 
 last = time.time()
 while True:
-  data = universe.tick(time.time()-last)
+  length = time.time()-last
+  if "-f" in sys.argv:
+    print("Frame rate: %.2f" % (1/length))
+  data = universe.tick(length)
 #  data = universe.tick(.03)
   last = time.time()
   if "-v" in sys.argv:
@@ -94,5 +97,5 @@ while True:
   universe.collide()
   universe.tock()
 #  print("Sleeping:", time.time()-last)
-  time.sleep((1/frameRate)-(time.time()-last))
+#  time.sleep((1/frameRate)-(time.time()-last))
   

@@ -56,6 +56,10 @@ SocketWrapper.prototype.send = function(data) {
     this.socket.send(JSON.stringify(data));
 }
 
+SocketWrapper.prototype.close = function() {
+    this.socket.close();
+}
+
 function RemoteFunction(socket, seq, name, callback, timeoutCallback) {
     this.socket = socket;
     this.seq = seq;
@@ -116,49 +120,35 @@ window.client = {
     id: null, // This will be updated when connection is successful
     seq: 0,
     socket: null, // This needs to be set before we can initialize
-    init: function(socket) {
-	this.socket = socket;
+    init: function(host, port, path) {
+	if (this.socket) this.socket.close();
+	this.socket = new SocketWrapper(new WebSocket("ws://" + host + ":" + port + (path[0] == "/" ? path : "/" + path)));
 	this.socket.addOnOpen(function(evt) {
 	    console.log("Socket opened. Now calling whoami...");
-	    window.client.call("SharedClientDataStore__set", ["GlobalContext"], function(res) {
+	    window.client.call("SharedClientDataStore__set", ["GlobalContext"], {callback: function(res) {
 		this.id = res;
-	    }, {"key": "testVal", "value": "success"});
+	    }, kwargs: {"key": "testVal", "value": "success"} });
 	});
     },
-    call: function(name, context, callback, kwargs) {
+    call: function(name, context, extras) {
+	// Extras should be an object, e.g.:
+	// client.call("SharedClientDataStore__get", ["SharedClientDataStore", 0],
+	//           { args: ["test"],
+	//             kwargs: {default: "unknown"},
+	//             callback: function(data) {alert(data.result);}
+	//           }
+	// );
+	var args = [], kwargs = {}, callback;
+	console.log("Extras", extras);
+	if (extras && 'args' in extras) args = extras.args;
+	if (extras && 'kwargs' in extras) kwargs = extras.kwargs;
+	if (extras && 'callback' in extras) {
+	    callback = extras.callback;
+	    console.log("callback", callback);
+	}
 	var tmpSeq = ++this.seq;
 	var rf = new RemoteFunction(this.socket, tmpSeq, name, callback, null);
-	var newArgs = [context, kwargs].concat(Array.prototype.slice.call(arguments, 4));
+	var newArgs = [context, kwargs].concat(args);
 	rf.call.apply(rf, newArgs);
     }
-}
-
-$(function() {
-    window.client.init(new SocketWrapper(new WebSocket("ws://" + location.hostname + ":9000/client")));
-
-    window.client.socket.addOnOpen(function(evt) { console.log("WebSocket is open!"); registerWithServer();});
-    //window.client.socket.addOnMessage(function(data) { console.log(data); });
-
-    $("#test-btn").click(function() {
-	window.client.call("SharedClientDataStore__set", ["GlobalContext"], function(res) {
-	    $("#result-text").val(res.result[0] ? ("OK: " + res.result[1]) : "Failed");
-	}, {}, "shipName", prompt("Ship Name"));
-    });
-
-    $("#update-enable").change(function() {
-	window.client.call("ClientUpdater__requestUpdates", ["ClientUpdater", 0], function(res) {}, {}, "entity", this.checked ? parseInt($("#update-freq").val()) : 0);
-    });
-    $("#update-freq").change(function() {
-	if ($("#update-enable").prop("checked")) {
-	    window.client.call("ClientUpdater__requestUpdates", ["ClientUpdater", 0], function(res) {}, {}, "entity", parseInt($(this).val()));
-	}
-    });
-});
-
-function registerWithServer() {
-    //window.client.socket.send({"message": "Hello, socket!"});
-    $("#center-btn").click(function(){window.client.call("whoami", null, function(res) {console.log("You are " + res.seq);});}, {});
-    window.client.call("SharedClientDataStore__get", ["GlobalContext"], function(res) {
-	$("#result-text").val("From server: " + res.result);
-    }, {}, "shipName");
 }

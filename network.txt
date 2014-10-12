@@ -2,3 +2,35 @@ The network uses json objects over a network socket or a websocket.
 
 To request updates about all entity positions every 30 ticks:
 {"args": ["entity", 1000], "kwargs": {}, "op": "ClientUpdater__requestUpdates", "seq": 1, "context": ["ClientUpdater", 0]}
+
+Set the key 'test' to the value 'success' in the share data store
+{'op': 'SharedClientDataStore__set', 'seq': 2, 'context': None, 'kwargs': {}, 'args': ('test', 'success')}
+
+Successful result of setting the value
+{"result":[true,"success"],"seq":2}
+
+Retrieve the value of 'test' from the value store, defaulting to 'This is a default' if nothing is set yet
+{'op': 'SharedClientDataStore__get', 'seq': 3, 'context': None, 'kwargs': {'default': 'This is a default'}, 'args': ('test',)}
+
+Set the name of the ship in universe 0 and with id 0 to 'Artemis'
+{'op': 'Ship__name', 'seq': 4, 'context': ('Ship', 0, 0), 'kwargs': {}, 'args': ('Artemis',)}
+
+Get the name of the ship in universe 0 and with id 1
+The context here has three values:
+ -Entity type
+ -Universe id
+ -Entity id
+{'op': 'Ship__name', 'seq': 5, 'context': ('Ship', 0, 1), 'kwargs': {}, 'args': ()}
+
+The server returns that that ship's name is 'Victim'
+{"result":"Victim","seq":5}
+
+Turn on the shield generator of 'Victim'. The context here is four values:
+ -Component type
+ -Universe id
+ -Ship id
+ -Component id
+{'op': 'ShieldGenerator__enable', 'seq': 6, 'context': ('Component', 0, 1, 3), 'kwargs': {}, 'args': ()}
+
+Fire the missile from the first ship.
+{'op': 'WeaponsStation__fire', 'seq': 7, 'context': ('Component', 0, 0, 2), 'kwargs': {}, 'args': ()}

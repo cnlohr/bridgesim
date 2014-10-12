@@ -61,7 +61,7 @@ class Client:
                     except Exception as e:
                         print(e)
                         self.sender.send({"result": None, "error": e, "seq": data["seq"]})
-                    print("Client tried to set {} to {} in class {} -- IMPLEMENT ME".format(
+                    print("Client set {} to {} in class {}".format(
                         funcName, data["args"][0], clsName))
 
                 # handle getting properties
@@ -75,7 +75,7 @@ class Client:
                     except Exception as e:
                         print(e)
                         self.sender.send({"result": None, "error": e, "seq": data["seq"]})
-                    print("Client tried to get {} of class {} -- IMPLEMENT ME".format(funcName, clsName))
+                    print("Client got {} of class {}".format(funcName, clsName))
                 # unavailable function?
                 else:
                     print("Client tried to do {}.{}. Returning error.")

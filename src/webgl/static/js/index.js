@@ -92,3 +92,41 @@ function render() {
 	renderer.render(scene, camera);
 }
 
+function registerWithServer() {
+    //window.client.socket.send({"message": "Hello, socket!"});
+    $("#center-btn").click(function() {
+	window.client.call("whoami", null, {
+	    callback: function(res) {
+		console.log("You are " + res.seq);
+	    }
+	})});
+    
+    window.client.call("Ship__name", ["Ship", 0, 1],
+		       {
+			   callback: function(res) {
+			       $("#result-text").val(res.result);
+			   }
+		       });
+}
+
+$(function() {
+    window.client.init(location.hostname, 9000, "/client");
+
+    window.client.socket.addOnOpen(function(evt) { console.log("WebSocket is open!"); registerWithServer();});
+    //window.client.socket.addOnMessage(function(data) { console.log(data); });
+
+    $("#test-btn").click(function() {
+	window.client.call("Ship__name", ["Ship", 0, 1], {callback: function(res) {
+	    $("#result-text").val(res.result);
+	}, args: [prompt("Ship Name")]});
+    });
+
+    $("#update-enable").change(function() {
+	window.client.call("ClientUpdater__requestUpdates", ["ClientUpdater", 0], {args: ["entity", this.checked ? parseInt($("#update-freq").val()) : 0]});
+    });
+    $("#update-freq").change(function() {
+	if ($("#update-enable").prop("checked")) {
+	    window.client.call("ClientUpdater__requestUpdates", ["ClientUpdater", 0], {args: ["entity", parseInt($(this).val())]});
+	}
+    });
+});

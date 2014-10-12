@@ -20,6 +20,7 @@ class Client:
         self.address = address
         self.server = server
         self.api = api
+        self.maxage = 30
         self.sender.listeners.append(self.dataReceived)
 
 #        <op name>: {
@@ -93,7 +94,8 @@ class Client:
                 { "id": data.id,
                   "loc": data.location,
                   "rot": data.rotation,
-                  "vel": data.velocity
+                  "vel": data.velocity,
+                  "events": [x.__str__() for x in data.events if x.age() < self.maxage]
               })
         # TODO add the remaining kinds of updates
 

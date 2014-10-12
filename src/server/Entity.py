@@ -1,9 +1,11 @@
+import json
 import math
 import physics
 import random
+import time
 from ClientAPI import BaseContext, readable
 
-@readable('location', 'rotation', 'velocity', 'universe', 'radius', 'mass')
+@readable('location', 'rotation', 'velocity', 'universe', 'radius', 'mass', 'events')
 class Entity:
   class Context(BaseContext):
     def __init__(self, instance=None, serial=None):
@@ -20,6 +22,17 @@ class Entity:
     def instance(self, global_context):
       return global_context.universes[self.universe].entities[self.id]
 
+  class Event():
+    def __init__(self):
+      self.start = time.time()
+      self.type = "Generic"
+
+    def age(self):
+      return time.time() - self.start
+
+    def __str__(self):
+      return json.dumps({"type":self.type,
+        "age": self.age()})
   def __init__(self, config, universe, radius=100, mass=1000):
     self.location = physics.Vector()
     self.rotation = physics.Vector()
@@ -28,6 +41,7 @@ class Entity:
     self.radius = radius
     self.mass = mass
     self.color = (random.randint(0,255), random.randint(0,255), random.randint(0,255))
+    self.events = []
   
   def getID(self):
     return self.id
@@ -51,3 +65,4 @@ class Entity:
 
   def tock(self):
     return
+

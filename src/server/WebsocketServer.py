@@ -77,6 +77,7 @@ class NetworkServer:
     def __init__(self, config, universe):
         self.__dict__.update(config)
         self.universe = universe
+        self.store = self.universe.clientDataStore
         ClientHandler.universe = universe
         ClientHandler.store = self.universe.clientDataStore
         self.clients = ClientHandler.clients

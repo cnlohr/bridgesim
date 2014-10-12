@@ -3,7 +3,8 @@ var gEntities = new Array;    //Index into this with the server ID, Contains ful
 var gEntitiesRev = new Array;
 var gEntitiesID = new Array;  //Arbitrary list of all server IDs
 var gDisplayables = new Array; //index into this with server ID
-
+var gCurrentCameraEye = [10, 10, 10];
+var gCurrentCameraAt = [0, 0, 0];
 var rootperspective;
 
 function AddNewObjectDISP( serverID, objparams )
@@ -142,22 +143,34 @@ function GameUpdate()
 	if( objf == null && objt != null )
 	{
 		var targ = objt.loc.slice(0);
+		var targeye = [ targ[0] + 100, targ[1] + 100, targ[2] + 100 ];
+
+		var slk = .9;
+		var islk = 1.-slk;
+
+		gCurrentCameraEye[0] = gCurrentCameraEye[0] * slk + targeye[0] * islk;
+		gCurrentCameraEye[1] = gCurrentCameraEye[1] * slk + targeye[1] * islk;
+		gCurrentCameraEye[2] = gCurrentCameraEye[2] * slk + targeye[2] * islk;
+
+		gCurrentCameraAt[0] = gCurrentCameraAt[0] * slk + targ[0] * islk;
+		gCurrentCameraAt[1] = gCurrentCameraAt[1] * slk + targ[1] * islk;
+		gCurrentCameraAt[2] = gCurrentCameraAt[2] * slk + targ[2] * islk;
 
 		//Move the camera to the object.
-		rootperspective.at[0] = targ[0];
-		rootperspective.at[1] = targ[1];
-		rootperspective.at[2] = targ[2];
+		rootperspective.at[0] = gCurrentCameraAt[0];
+		rootperspective.at[1] = gCurrentCameraAt[1];
+		rootperspective.at[2] = gCurrentCameraAt[2];
 
-		rootperspective.eye[0] = targ[0]+100;
-		rootperspective.eye[1] = targ[1]+100;
-		rootperspective.eye[2] = targ[2]+100;
+		rootperspective.eye[0] = gCurrentCameraEye[0];
+		rootperspective.eye[1] = gCurrentCameraEye[1];
+		rootperspective.eye[2] = gCurrentCameraEye[2];
 
 		rootperspective.up[0] = 0;
 		rootperspective.up[1] = 0;
 		rootperspective.up[2] = 1;
-//		console.log( id.loc );
 
-		//console.log( objt.loc );
+		rootperspective.angle = 45;
+
 	}
 }
 

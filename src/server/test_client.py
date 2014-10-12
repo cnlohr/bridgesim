@@ -36,12 +36,12 @@ receiver = UpdateReceiver(nw)
 threading.Thread(target=nw.listen, daemon=True).start()
 
 try:
+    ourCtx = ("ClientUpdater", 0)
+    print(caller.ClientUpdater__requestUpdates("entity", 30, context=ourCtx))
     print(caller.SharedClientDataStore__set("test", "success"))
-    ourCtx = ("ClientUpdater", caller.id)
 
     print(caller.SharedClientDataStore__get("test", default="failish"))
 
-    print(caller.ClientUpdater__requestUpdates("entity", 30, context=ourCtx))
 
     print("What should we call our ship?")
     print(caller.Ship__name(input(), context=("Ship", 0, 0)))

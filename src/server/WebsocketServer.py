@@ -2,7 +2,9 @@ from Client import Client, ClientUpdater
 from SocketNetworker import SocketNetworker
 import threading
 import socket
+import physics
 import os
+import json
 
 import cherrypy
 from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
@@ -22,14 +24,20 @@ class Root():
         # you can access the class instance through
         handler = cherrypy.request.ws_handler
 
+class VectorEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, physics.Vector):
+            return list(obj.dimensions)
+        return json.JSONEncoder.default(self, obj)
 
 class ClientHandler(WebSocket):
     clients = {}
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.listeners = []
+        self.listening = False
         print("Client connected!")
-        self.client = Client(self.api, None, self, SocketNetworker(self))
+        self.client = Client(self.api, None, self, self)
         self.client.id = len(ClientHandler.clients)
         ClientHandler.clients[self.client.id] = self.client
         updater = ClientUpdater(self.universe, self.client)
@@ -38,15 +46,21 @@ class ClientHandler(WebSocket):
     def opened(self):
         print("Test send")
 
+    def send(self, data):
+        encodeddata = json.dumps(data, cls=VectorEncoder, separators=(',',':')).encode('UTF-8')
+        super().send(encodeddata)
+
     def received_message(self, message):
-        print(">>>", message)
+        print(">>>", message.data)
         self.send(str({"id": self.client.id}))
+        print(self.listeners)
         for i in self.listeners:
-            i(message)
+            print("Handling Message")
+            msg = json.loads(message.data.decode('UTF-8'))
+            i(msg)
  
 class NetworkServer:
     def __init__(self, config, universe):
-        self.port = 9000
         self.__dict__.update(config)
         self.universe = universe
         ClientHandler.universe = universe

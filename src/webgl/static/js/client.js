@@ -15,7 +15,8 @@ function SocketWrapper(socket) {
 
     socket.onmessage = function(evt) {
 	for (var l in wrap.onMessages.slice(0)) {
-	    wrap.onMessages[l](JSON.parse(atob(evt.data)));
+	    // Might need to do atob() here?
+	    wrap.onMessages[l](JSON.parse(evt.data));
 	}
     }
 
@@ -49,7 +50,8 @@ SocketWrapper.prototype.addOnClose = function(cb) {
 }
 
 SocketWrapper.prototype.send = function(data) {
-    this.socket.send(btoa(JSON.stringify(data)));
+    // FIXME maybe need btoa here?
+    this.socket.send(JSON.stringify(data));
 }
 
 function RemoteFunction(socket, seq, name, callback, timeoutCallback) {
@@ -124,9 +126,7 @@ window.client = {
 }
 
 $(function() {
-    var wsUri = "ws://echo.websocket.org/";
-
-    window.client.init(new SocketWrapper(new WebSocket("ws://" + location.hostname + ":" + (parseInt(location.port) + 1), ['base64', 'binary'])));
+    window.client.init(new SocketWrapper(new WebSocket("ws://" + location.hostname + ":9000/client")));
 
     window.client.socket.addOnOpen(function(evt) { console.log("WebSocket is open!"); registerWithServer();});
     //window.client.socket.addOnMessage(function(data) { console.log(data); });

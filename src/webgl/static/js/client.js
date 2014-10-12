@@ -96,6 +96,7 @@ RemoteFunction.prototype.call = function(context, kwargs) {
 	"context": context
     };
 
+    // javascript is stupid
     var theese = this;
 
     this.boundMethod = function(data){theese.listener(data);};
@@ -127,9 +128,7 @@ window.client = {
     call: function(name, context, callback, kwargs) {
 	var tmpSeq = ++this.seq;
 	var rf = new RemoteFunction(this.socket, tmpSeq, name, callback, null);
-	var newArgs = [context, kwargs];
-	newArgs.concat(Array.slice(arguments, 4));
-	console.log("newArgs are ", newArgs);
+	var newArgs = [context, kwargs].concat(Array.slice(arguments, 4));
 	rf.call.apply(rf, newArgs);
     }
 }
@@ -143,7 +142,16 @@ $(function() {
     $("#test-btn").click(function() {
 	window.client.call("SharedClientDataStore__set", ["GlobalContext"], function(res) {
 	    $("#result-text").val(res.result[0] ? ("OK: " + res.result[1]) : "Failed");
-	}, {"key": "shipName", "value": prompt("Ship Name")});
+	}, {}, "shipName", prompt("Ship Name"));
+    });
+
+    $("#update-enable").change(function() {
+	window.client.call("ClientUpdater__requestUpdates", ["ClientUpdater", 0], function(res) {}, {}, "entity", this.checked ? $("#update-freq").val() : 0);
+    });
+    $("#update-freq").change(function() {
+	if ($("#update-enable").prop("checked")) {
+	    window.client.call("ClientUpdater__requestUpdates", ["ClientUpdater", 0], function(res) {}, {}, "entity", $(this).val());
+	}
     });
 });
 

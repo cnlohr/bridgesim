@@ -21,8 +21,8 @@ class SocketNetworker:
         try:
             out = json.dumps(data, cls=VectorEncoder, separators=(',',':')).encode('UTF-8')
 
-            self.socket.sendall(struct.pack('!I', len(out)))
-            self.socket.sendall(out)
+            self.socket.send(struct.pack('!I', len(out)))
+            self.socket.send(out)
             return True
         except Exception as e:
             print("Error in send!!!", e)

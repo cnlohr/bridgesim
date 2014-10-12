@@ -3,6 +3,7 @@
 import threading
 import socket
 import sys
+import time
 from RemoteFunctionCaller import *
 from SocketNetworker import SocketNetworker
 from UpdateReceiver import UpdateReceiver
@@ -40,7 +41,7 @@ try:
 
     print(caller.SharedClientDataStore__get("test", default="failish"))
 
-    print(caller.ClientUpdater__requestUpdates("entity", 10, context=ourCtx))
+    print(caller.ClientUpdater__requestUpdates("entity", 30, context=ourCtx))
 
     print("What should we call our ship?")
     print(caller.Ship__name(input(), context=("Ship", 0, 0)))
@@ -52,6 +53,7 @@ try:
     print("Press enter to make ship go boom . . .")
     input()
     print(caller.WeaponsStation__fire(context=("Component", 0, 0, 2)))
+    time.sleep(6)
 except TimeoutError:
     print("Timed out.")
 finally:

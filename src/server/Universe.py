@@ -1,3 +1,4 @@
+from SharedClientDataStore import SharedClientDataStore
 from ClientAPI import BaseContext
 
 class Universe:
@@ -16,6 +17,7 @@ class Universe:
       return global_context.universes[self.id]
 
   def __init__(self, size=(100000000, 100000000)):
+    self.clientDataStore = SharedClientDataStore()
     self.entities = {}
     self.height = size[1]
     self.width = size[0]

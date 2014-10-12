@@ -1,5 +1,4 @@
 #!/usr/bin/python
-import pygame
 import Universe
 import json
 import Entity
@@ -8,11 +7,12 @@ import Component
 import time
 import physics
 import Missile
-import NetworkServer
+import WebsocketServer as NetworkServer
 import os
 import ClientAPI
 import Client
 import SharedClientDataStore
+import sys
 
 frameRate = 30
 
@@ -21,12 +21,14 @@ with open("../../assets/data/ships/destroyer.json", 'r') as shipConfFile:
 with open("../data/weapons.json", 'r') as missileConfFile:
   missileConf = json.load(missileConfFile)
 missileConf = missileConf['weapons']['nuke']
-
-pygame.init()
-basicFont = pygame.font.SysFont(None, 24)
 size = width, height = 6400,4800
-SCALEFACTOR = 640/width
-screen = pygame.display.set_mode((int(width*SCALEFACTOR), int(height*SCALEFACTOR)))
+
+if "-v" in sys.argv:
+  import pygame
+  pygame.init()
+  basicFont = pygame.font.SysFont(None, 24)
+  SCALEFACTOR = 640/width
+  screen = pygame.display.set_mode((int(width*SCALEFACTOR), int(height*SCALEFACTOR)))
 
 universe = Universe.Universe(size)
 universe.id = 0
@@ -67,7 +69,8 @@ for i in ship1.components.values():
     i.energy = 1
     i.load(missile)
 
-screen.fill((255,255,255))
+if "-v" in sys.argv:
+  screen.fill((255,255,255))
 
 universe.tick(5)
 universe.collide()
@@ -78,16 +81,16 @@ while True:
 #  data = universe.tick(time.time()-last)
   data = universe.tick(.03)
   last = time.time()
-  screen.fill((255,255,255))
-  for i in data:
-#    print(int(i[0]*SCALEFACTOR),int(i[1]*SCALEFACTOR))
-    pygame.draw.circle(screen, i[4], (int((i[0]-i[2])*SCALEFACTOR),int((i[1]-i[2])*SCALEFACTOR)), int(i[2]*SCALEFACTOR))
-    text = basicFont.render(i[3], True, (0,0,0))
-    textRect = text.get_rect()
-    textRect.centerx = int((i[0]-i[2])*SCALEFACTOR)
-    textRect.centery = int((i[1]-i[2])*SCALEFACTOR)-15
-    screen.blit(text, textRect)
-  pygame.display.flip()
+  if "-v" in sys.argv:
+    screen.fill((255,255,255))
+    for i in data:
+      pygame.draw.circle(screen, i[4], (int((i[0]-i[2])*SCALEFACTOR),int((i[1]-i[2])*SCALEFACTOR)), int(i[2]*SCALEFACTOR))
+      text = basicFont.render(i[3], True, (0,0,0))
+      textRect = text.get_rect()
+      textRect.centerx = int((i[0]-i[2])*SCALEFACTOR)
+      textRect.centery = int((i[1]-i[2])*SCALEFACTOR)-15
+      screen.blit(text, textRect)
+    pygame.display.flip()
   universe.collide()
   universe.tock()
 #  print("Sleeping:", time.time()-last)

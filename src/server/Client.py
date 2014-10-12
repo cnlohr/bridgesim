@@ -92,6 +92,7 @@ class Client:
         if kind == "entity":
             self.updates[kind].append(
                 { "id": data.id,
+                  "name": data.name,
                   "loc": data.location,
                   "rot": data.rotation,
                   "vel": data.velocity,

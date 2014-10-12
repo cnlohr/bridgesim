@@ -24,7 +24,7 @@ class Ship(Entity):
       temp[comp.id] = comp
       self.energySupply[comp] = 1
     self.components = temp
-    self.name = ""
+    self.name = "Ship"
     
   def collide(self, other):
     print("I got hit!")

@@ -9,7 +9,7 @@ class NetworkServer:
     def __init__(self, config, universe):
         self.ipmode = 4
         self.host = '::' if self.ipmode == 6 else '0.0.0.0'
-        self.port = 8553
+        self.port = 9000
         self.__dict__.update(config)
         self.universe = universe
         self.store = SharedClientDataStore()

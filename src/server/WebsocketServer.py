@@ -68,7 +68,7 @@ class ClientHandler(WebSocket):
                 msg = json.loads(message.data.decode('UTF-8'))
                 if not 'context' in msg:
                     print("Adding context")
-                    msg['context'] = ["ClientUpdater", self.client.id]
+                    msg['context'] = [msg['op'].split("__")[0], self.client.id]
                 i(msg)
         except:
             print("Receive Failed")

@@ -62,7 +62,6 @@ class ClientHandler(WebSocket):
             print(">>>", message.data)
             if not(self.idsent):
                 self.send(str({"id": self.client.id}))
-                return
             print(self.listeners)
             for i in self.listeners:
                 print("Handling Message")

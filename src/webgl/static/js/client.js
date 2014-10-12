@@ -14,6 +14,7 @@ function SocketWrapper(socket) {
     }
 
     socket.onmessage = function(evt) {
+	console.log("Receiving: ", evt.data);
 	for (var l in wrap.onMessages.slice(0)) {
 	    // Might need to do atob() here?
 	    wrap.onMessages[l](JSON.parse(evt.data));
@@ -51,6 +52,7 @@ SocketWrapper.prototype.addOnClose = function(cb) {
 
 SocketWrapper.prototype.send = function(data) {
     // FIXME maybe need btoa here?
+    console.log("Sending: ", data);
     this.socket.send(JSON.stringify(data));
 }
 
@@ -66,6 +68,7 @@ function RemoteFunction(socket, seq, name, callback, timeoutCallback) {
 }
 
 RemoteFunction.prototype.listener = function(data) {
+    try {
     if (data && "seq" in data) {
 	if (data.seq == this.seq) {
 	    clearTimeout(this.timer);
@@ -77,14 +80,19 @@ RemoteFunction.prototype.listener = function(data) {
 	    delete this.socket.onMessages[ourIndex];
 	}
     }
+    } catch (e) {
+	console.log(data);
+	console.log(e);
+    }
 };
 
-RemoteFunction.prototype.call = function(context) {
+RemoteFunction.prototype.call = function(context, kwargs) {
+    if (!kwargs) kwargs = {};
     var data = {
 	"seq": this.seq,
 	"op": this.name,
-	"args": Array.slice(arguments, 1),
-	"kwargs": {},
+	"args": Array.slice(arguments, 2),
+	"kwargs": kwargs,
 	"context": context
     };
 
@@ -111,16 +119,17 @@ window.client = {
 	this.socket = socket;
 	this.socket.addOnOpen(function(evt) {
 	    console.log("Socket opened. Now calling whoami...");
-	    window.client.call("whoami", null, function(res) {
+	    window.client.call("SharedClientDataStore__set", ["GlobalContext"], function(res) {
 		this.id = res;
-	    });
+	    }, {"key": "testVal", "value": "success"});
 	});
     },
-    call: function(name, context, callback) {
+    call: function(name, context, callback, kwargs) {
 	var tmpSeq = ++this.seq;
 	var rf = new RemoteFunction(this.socket, tmpSeq, name, callback, null);
-	var newArgs = [context];
-	newArgs.concat(Array.slice(arguments, 3));
+	var newArgs = [context, kwargs];
+	newArgs.concat(Array.slice(arguments, 4));
+	console.log("newArgs are ", newArgs);
 	rf.call.apply(rf, newArgs);
     }
 }
@@ -133,6 +142,6 @@ $(function() {
 });
 
 function registerWithServer() {
-    window.client.socket.send({"message": "Hello, socket!"});
-    $("#center-btn").click(function(){window.client.call("whoami", null, function(res) {console.log("You are " + res.seq);});});
+    //window.client.socket.send({"message": "Hello, socket!"});
+    $("#center-btn").click(function(){window.client.call("whoami", null, function(res) {console.log("You are " + res.seq);});}, {});
 }

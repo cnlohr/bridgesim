@@ -80,6 +80,7 @@ class NetworkServer:
         self.store = self.universe.clientDataStore
         ClientHandler.universe = universe
         ClientHandler.store = self.universe.clientDataStore
+        self.store = self.universe.clientDataStore
         self.clients = ClientHandler.clients
 
     def run(self):

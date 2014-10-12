@@ -8,7 +8,6 @@ class Ship(Entity):
   def __init__(self, config, universe):
     super().__init__(config, universe)
     self.__dict__.update(config)
-
     self.energy = self.maxEnergy
 
     # How much power Engineering is giving to each component - [0, 1] normally

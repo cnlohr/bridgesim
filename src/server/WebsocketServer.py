@@ -50,17 +50,26 @@ class ClientHandler(WebSocket):
         print("Test send")
 
     def send(self, data):
-        encodeddata = json.dumps(data, cls=VectorEncoder, separators=(',',':')).encode('UTF-8')
-        super().send(encodeddata)
+        try:
+            encodeddata = json.dumps(data, cls=VectorEncoder, separators=(',',':')).encode('UTF-8')
+            super().send(encodeddata)
+        except:
+            print("Send Failed")
 
     def received_message(self, message):
-        print(">>>", message.data)
-        self.send(str({"id": self.client.id}))
-        print(self.listeners)
-        for i in self.listeners:
-            print("Handling Message")
-            msg = json.loads(message.data.decode('UTF-8'))
-            i(msg)
+        try:
+            print(">>>", message.data)
+            self.send(str({"id": self.client.id}))
+            print(self.listeners)
+            for i in self.listeners:
+                print("Handling Message")
+                msg = json.loads(message.data.decode('UTF-8'))
+                if not 'context' in msg:
+                    print("Adding context")
+                    msg['context'] = ["ClientUpdater", self.client.id]
+                i(msg)
+        except:
+            print("Receive Failed")
  
 class NetworkServer:
     def __init__(self, config, universe):

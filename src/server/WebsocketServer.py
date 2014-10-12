@@ -10,7 +10,10 @@ import cherrypy
 from ws4py.server.cherrypyserver import WebSocketPlugin, WebSocketTool
 from ws4py.websocket import WebSocket
 
-cherrypy.config.update({'server.socket_port': 9000, 'server.socket_host':'0.0.0.0'})
+cherrypy.config.update( {
+	'server.socket_port': 9000,
+	'server.socket_host':'0.0.0.0',
+})
 WebSocketPlugin(cherrypy.engine).subscribe()
 cherrypy.tools.websocket = WebSocketTool()
 
@@ -68,8 +71,17 @@ class NetworkServer:
         self.clients = ClientHandler.clients
 
     def run(self):
-            cherrypy.quickstart(Root(), '/', config={'/client': {'tools.websocket.on': True,
-                                                     'tools.websocket.handler_cls': ClientHandler}})
+            cherrypy.quickstart(Root(), '/', config={
+				'/client': {
+					'tools.websocket.on': True,
+					'tools.websocket.handler_cls': ClientHandler
+				},
+				'/': {
+					'tools.staticdir.on' : True,
+				    'tools.staticdir.dir' : os.path.join( os.getcwd(), 'web/' ),
+	    			'tools.staticdir.index' : 'index.html'
+				}
+			});
 
     def start(self, api):
         ClientHandler.api = api

@@ -69,19 +69,19 @@ function RemoteFunction(socket, seq, name, callback, timeoutCallback) {
 
 RemoteFunction.prototype.listener = function(data) {
     try {
-    if (data && "seq" in data) {
-	if (data.seq == this.seq) {
-	    clearTimeout(this.timer);
-	    this.complete = true;
-	    this.callback(data);
+	if (data && "seq" in data) {
+	    if (data.seq == this.seq) {
+		clearTimeout(this.timer);
+		this.complete = true;
+		this.callback(data);
 
-	    // if we leave this around we get exponential calls, oops
-	    var ourIndex = this.socket.onMessages.indexOf(this.boundMethod);
-	    delete this.socket.onMessages[ourIndex];
+		// if we leave this around we get exponential calls, oops
+		var ourIndex = this.socket.onMessages.indexOf(this.boundMethod);
+		delete this.socket.onMessages[ourIndex];
+	    }
 	}
-    }
     } catch (e) {
-	console.log(data);
+	console.log("Data is", data);
 	console.log(e);
     }
 };
@@ -158,4 +158,7 @@ $(function() {
 function registerWithServer() {
     //window.client.socket.send({"message": "Hello, socket!"});
     $("#center-btn").click(function(){window.client.call("whoami", null, function(res) {console.log("You are " + res.seq);});}, {});
+    window.client.call("SharedClientDataStore__get", ["GlobalContext"], function(res) {
+	$("#result-text").val("From server: " + res.result);
+    }, {}, "shipName");
 }

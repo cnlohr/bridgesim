@@ -36,6 +36,7 @@ class VectorEncoder(json.JSONEncoder):
 class ClientHandler(WebSocket):
     clients = {}
     def __init__(self, *args, **kwargs):
+        self.idsent = False
         super().__init__(*args, **kwargs)
         self.listeners = []
         self.listening = False
@@ -59,7 +60,9 @@ class ClientHandler(WebSocket):
     def received_message(self, message):
         try:
             print(">>>", message.data)
-            self.send(str({"id": self.client.id}))
+            if not(self.idsent):
+                self.send(str({"id": self.client.id}))
+                return
             print(self.listeners)
             for i in self.listeners:
                 print("Handling Message")

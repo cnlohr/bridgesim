@@ -9,6 +9,13 @@ var gCurrentCameraUp = [0, 0, 1];
 var gCameraFOV = 45;
 var gCameraFOVTarget = 45; //Change this for smooth motion.
 var rootperspective;
+var gOuterRotateViewX = 0;
+var gOuterRotateViewY = 0;
+var gViewMode = 0;
+	//Mode 0 = view from free, to free.
+	//Mode 1 = from free to specific object.
+	//Mode 2 = free look from a specific object.
+	//Mode 3 = looking from one object to another.
 
 function AddNewObjectDISP( serverID, objparams )
 {
@@ -126,6 +133,14 @@ function MouseWheelEvent( direction )
 		gCameraFOVTarget--;
 }
 
+function MainScreenRelativeRotationMotion( rx, ry )
+{
+	gOuterRotateViewX += rx * .01;
+	gOuterRotateViewY += ry * .01;
+	if( gOuterRotateViewY > 1.57 ) gOuterRotateViewY = 1.57;
+	if( gOuterRotateViewY < -1.57 ) gOuterRotateViewY = -1.57;
+}
+
 //Called every frame.
 function GameUpdate()
 {
@@ -158,17 +173,39 @@ function GameUpdate()
 	var targeye = gCurrentCameraEye;
 	var targup = gCurrentCameraUp;
 
-	if( objf == null && objt != null )
-	{
-		targ = objt.loc.slice(0);
-		targeye = [ targ[0] + 100, targ[1] + 100, targ[2] + 100 ];
-		targup = [0, 0, 1];
-	}
 	if( objf == null && objt == null )
 	{
 		targ = [ 0, 0, 0];
 		targeye = [0, 0, 7000];
 		targup = [0, 1, 0];
+		gViewMode = 0;
+	}
+	if( objf == null && objt != null )
+	{
+		//gOuterRotateViewX
+		var dx = 150 * Math.sin(gOuterRotateViewX) * Math.cos( gOuterRotateViewY );
+		var dy = 150 * Math.cos(gOuterRotateViewX) * Math.cos( gOuterRotateViewY );
+		var dz = 150 * Math.sin( gOuterRotateViewY );
+		targ = objt.loc.slice(0);
+		targeye = [ targ[0] + dx, targ[1] + dy, targ[2] + dz ];
+		targup = [0, 0, 1];
+		gViewMode = 1;
+	}
+	if( objf != null && objt == null )
+	{
+		var dx = 150 * Math.sin(gOuterRotateViewX) * Math.cos( gOuterRotateViewY );
+		var dy = 150 * Math.cos(gOuterRotateViewX) * Math.cos( gOuterRotateViewY );
+		var dz = 150 * Math.sin( gOuterRotateViewY );
+		targeye = objf.loc.slice(0);
+		targ = [ targeye[0] - dx, targeye[1] - dy, targeye[2] - dz ];
+		targup = [0, 0, 1];
+
+		//Tricky, we hide the objf so it's not in our face.
+		var su = gDisplayables[vfi];
+		su.children[0].matrix.scale( 0, 0, 0 );
+		gViewMode = 3;
+
+		gViewMode = 2;
 	}
 	if( objf != null && objt != null )
 	{
@@ -179,10 +216,7 @@ function GameUpdate()
 		//Tricky, we hide the objf so it's not in our face.
 		var su = gDisplayables[vfi];
 		su.children[0].matrix.scale( 0, 0, 0 );
-	}
-	if( objf != null && objt == null )
-	{
-		//free look... Not sure how to do this.
+		gViewMode = 3;
 	}
 
 	gCurrentCameraEye[0] = gCurrentCameraEye[0] * slk + targeye[0] * islk;

@@ -8,15 +8,24 @@
  -->
 <html>
 <head>
+<style>
+body{
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+</style>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>CNWebGL Test</title>
-
-
+<title>Bridgesim Main Screen</title>
 <script src="J3DIMath.js" type="text/javascript"> </script>
 <script src="mainscreen.js" > </script>
 <script src="CNWebGL.js" > </script>
 <script src="CNWebGLUtil.js" > </script>
 <script src="websocket.js"></script>
+<script src="util.js"></script>
 
 <script id="vert" type="x-shader/x-vertex">
 	uniform mat4 MVPMatrix;
@@ -36,7 +45,6 @@
 		gl_Position = MVPMatrix * vPosition;
 		v_texCoord = vTexCoord.st;
 		vec4 transNormal = NormalMatrix * vec4(normalize(vNormal), 1);
-		//transNormal.z *= -1.0;
 		fDot = dot(normalize(transNormal.xyz), normalize(LightDir.xyz)) / 2.0 + .5;
 		v_Dot = vec3( fDot );
 	}
@@ -100,7 +108,8 @@
 		wsInitString = '{"args": ["entity", 10], "kwargs": {}, "op": "ClientUpdater__requestUpdates", "seq": 1 }';
 		StartWebSocket();
 
-		AttachMouseWheel(); 
+		AttachMouseWheel( MouseWheelEvent, document.getElementById("example") ); 
+		setupPoinerMotion( PointerMotionFn );
 	}
 
 	cwg.trace( "Loaded." );
@@ -120,36 +129,9 @@
 	rt.children.push( rootperspective);
 
 
-	/*
-	var tt = new CNGLCreateTextureAsset( cwg, "alert_text" );
-	var tm = new CNGLCreateLoadableModelNode(cwg, "alert_mod" );
-	tt.load( "alert1.png" );
-	tm.LoadOBJModelURI( "g1.obj");
-
-	game.gamealert = new CNGLCreateTransformNode(cwg);
-	game.gamesuperalert = new CNGLCreateTransformNode(cwg);
-	game.gamealert.children.push( tm );
-	game.gamealert.assets.push( tt );
-
-	game.gamesuperalert.matrix.translate( [0,0,0] );
-	game.gamesuperalert.children.push( game.gamealert );
-	rootperspective.children.push( game.gamesuperalert );
-	*/
 	var rootshader = new CNGLCreateShaderAsset( cwg, "RootShader" );
 	rootshader.loadobjs( "vert", "frag" );
 	rootperspective.assets.push( rootshader );
-
-	rootperspective.at[0] = 0;
-	rootperspective.at[1] = 0;
-	rootperspective.at[2] = 0;
-
-	rootperspective.eye[0] = 0;
-	rootperspective.eye[1] = 0;
-	rootperspective.eye[2] = 2000;
-
-	rootperspective.up[0] = 1;
-	rootperspective.up[1] = 0;
-	rootperspective.up[2] = 0;
 
 
 	cwg.last_time = new Date();
@@ -161,20 +143,15 @@
 		cwg.Draw(); 
 	}, 10);
 
-	c.onmousedown = function ( ev )
-	{
-	}
-	c.onmouseup = function ( ev ){
-	}
+		c.onmousedown = function ( ev )
+		{
+		}
+		c.onmouseup = function ( ev ){
+		}
     }
 
 
 
-function bodymove( ev )
-{
-	var x = ev.clientX;
-	var y = ev.clientY;
-}
 
 function keyup( ev )
 {
@@ -184,57 +161,19 @@ function keydown( ev )
 {
 }
 
-function goFullScreen( te){
-    if(te.requestFullScreen)
-        te.requestFullScreen();
-    else if(te.webkitRequestFullScreen)
-        te.webkitRequestFullScreen();
-    else if(te.mozRequestFullScreen)
-        te.mozRequestFullScreen();
-}
-
-
-function fsmm( e )
+function PointerMotionFn( x, y, rx, ry, mouse, locked )
 {
-  var movementX = e.movementX ||
-      e.mozMovementX          ||
-      e.webkitMovementX       ||
-      0,
-  movementY = e.movementY ||
-      e.mozMovementY      ||
-      e.webkitMovementY   ||
-      0;
-
-	document.getElementById( "status" ).value =  movementX + " " + movementY;
-}
-
-
-//Zoom in/out
-
-function mousewheelhandlerroot(e){
-    var evt=window.event || e;
-    var delta=evt.detail? evt.detail*(-120) : evt.wheelDelta;
-    var direction = (delta<=-120)?1:-1;
-
-	MouseWheelEvent( direction );
-}
-
-function AttachMouseWheel()
-{
-	var mousewheelevt=(/Firefox/i.test(navigator.userAgent))? "DOMMouseScroll" : "mousewheel" //FF doesn't recognize mousewheel as of FF3.x
-
-	var canv = document.getElementById("example");
-
-	if (canv.attachEvent) //if IE (and Opera depending on user setting)
-		canv.attachEvent("on"+mousewheelevt, mousewheelhandlerroot)
-	else if (canv.addEventListener) //WC3 browsers
-		canv.addEventListener(mousewheelevt, mousewheelhandlerroot, false)
+	document.getElementById( "status" ).value =  x + " " + y + " " + rx + " " + ry + " " + mouse + " " + locked;
+	if( mouse || locked )
+	{
+		MainScreenRelativeRotationMotion( rx, ry );
+	}
 }
 
 </script>
 </head>
 
-<body onload="start()" onkeydown="keydown(event);" onkeyup="keyup(event);" onmousemove="bodymove(event);" >
+<body onload="start()" onkeydown="keydown(event);" onkeyup="keyup(event);" >
 
 
 <DIV id=te STYLE="position:fixed;top:0px;left:0px;">
@@ -242,7 +181,8 @@ function AttachMouseWheel()
 		<div id="framerate"></DIV>
 		<div id="buttons">
 			<INPUT TYPE=SUBMIT onclick="goFullScreen( document.getElementById('te') );" name=fsbtn VALUE="Go Fullscreen"><BR>
-<!--			<INPUT TYPE=TEXT id="status"><BR> -->
+			<INPUT TYPE=SUBMIT onclick="pointerlock( !ispointerlocked, document.getElementById('example') );" name=ptrlok VALUE="Pointer Lock"><BR>
+			<INPUT TYPE=TEXT id="status"><BR>
 			View From: <SELECT id="viewfrom"><OPTION value="-1">Free</OPTION></SELECT><BR>
 			View To: <SELECT id="viewto"><OPTION value="-1">Free</OPTION></SELECT>
 		</div>

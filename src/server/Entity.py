@@ -34,9 +34,10 @@ class Entity:
       return json.dumps({"type":self.type,
         "age": self.age()})
   def __init__(self, config, universe, radius=100, mass=1000):
-    self.location = physics.Vector()
-    self.rotation = physics.Vector()
-    self.velocity = physics.Vector()
+    self.thrustVectors = {}
+    self.location = physics.Vector(0,0,0)
+    self.rotation = physics.Vector(0,0,0,1)
+    self.velocity = physics.Vector(0,0,0)
     self.universe = universe
     self.radius = radius
     self.mass = mass

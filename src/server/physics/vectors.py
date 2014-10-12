@@ -5,7 +5,7 @@ DEBUG = True
 
 class DimensionalityError(Exception): pass
 
-class NVector(object):
+class Vector(object):
   """N-dimensional vector of arbitrary units."""
 
   def __init__(self, *dimensions):
@@ -69,14 +69,14 @@ dimensionality"""
     """Add two vectors."""
     # This operation is only defined for two vectors, so we can just
     # pass it to _op_by_dimension_, assuming it's a vector.
-    if not issubclass(type(rhs), NVector): return NotImplemented
+    if not issubclass(type(rhs), Vector): return NotImplemented
 
     return self._op_by_dimension_(operator.add, self, rhs)
 
   def __sub__(self, rhs):
     """Subtract one vector from another."""
     # Again, this is only valid for two vectors.
-    if not issubclass(type(rhs), NVector): return NotImplemented
+    if not issubclass(type(rhs), Vector): return NotImplemented
 
     return self._op_by_dimension_(operator.sub, self, rhs)
 
@@ -84,7 +84,7 @@ dimensionality"""
     """Multiply one vector and one scalar, or two vectors."""
     # First, check if the right hand side is a vector. If so, pass it to
     # _op_by_dimension_.
-    if issubclass(type(rhs), NVector):
+    if issubclass(type(rhs), Vector):
       return self._op_by_dimension_(operator.mul, self, rhs)
 
     # Otherwise, use the scalar.
@@ -99,7 +99,7 @@ dimensionality"""
   def __floordiv__(self, rhs):
     """Divide one vector by a scalar, or two vectors using floor
 division."""
-    if issubclass(type(rhs), NVector):
+    if issubclass(type(rhs), Vector):
       return self._op_by_dimension_(operator.floordiv, self, rhs)
 
     else:
@@ -108,7 +108,7 @@ division."""
   def __truediv__(self, rhs):
     """Divide one vector by a scalar, or two vectors using true
 division."""
-    if issubclass(type(rhs), NVector):
+    if issubclass(type(rhs), Vector):
       return self._op_by_dimension_(operator.truediv, self, rhs)
 
     else:
@@ -116,7 +116,7 @@ division."""
 
   @classmethod
   def _op_by_dimension_(cls, op, nvec1, nvec2):
-    """Apply an operator, element by element, to two NVectors. If they
+    """Apply an operator, element by element, to two Vectors. If they
 are of different dimensionalities, raise a DimensionalityError."""
 
     if nvec1.dimensionality() != nvec2.dimensionality():
@@ -143,7 +143,7 @@ are of different dimensionalities, raise a DimensionalityError."""
   def __repr__(self):
     return "'%s'" % str(self)
 
-class Vector(NVector):
+class TriVector(Vector):
   """Three dimensional vector of arbitrary units."""
   def __init__(self, x = 0, y = 0, z = 0):
     self.x, self.y, self.z = float(x), float(y), float(z)
@@ -272,7 +272,7 @@ def RotateQuaternionByQuaternion(apoint, bpoint):
   return result
 
 def TurnTowards(rotationpoint, locationpoint, targetLocationpoint, turning, referenceOrientation, timeMultiplier):
-  facing = OrientationVector(list(rotationpoint), referenceOrientation)
+  facing = OrientatioVector(list(rotationpoint), referenceOrientation)
   rotation = list(rotationpoint)
   location = list(locationpoint)
   targetLocation = list(targetLocationpoint)
@@ -294,7 +294,7 @@ def TurnTowards(rotationpoint, locationpoint, targetLocationpoint, turning, refe
 def DerollFacing(quaternionpoint): #doesn't work yet
   q = Normalize(list(quaternionpoint))
   roll  = math.atan2(2*q[2]*q[0] - 2*q[1]*q[3], 1 - 2*q[2]*q[2] - 2*q[3]*q[3])
-  vector = Normalize(OrientationVector(q))
+  vector = Normalize(OrientatioVector(q))
   derolled = RotateQuaternionByQuaternion(AngleVectorToQuaternion(-1 * roll, vector),q)
   return derolled
   
@@ -303,7 +303,7 @@ def CheckRoll(quaternionpoint):
   roll  = atan2(2*q[2]*q[0] - 2*q[1]*q[3], 1 - 2*q[2]*q[2] - 2*q[3]*q[3])
   return roll
 
-def OrientationVector(quaternionpoint, referenceOrientation):
+def OrientatioVector(quaternionpoint, referenceOrientation):
   quaternion = list(quaternionpoint)
   reference = Normalize(referenceOrientation)
   return RotateVectorByQuaternion(reference, quaternion)

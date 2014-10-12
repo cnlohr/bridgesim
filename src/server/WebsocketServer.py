@@ -61,7 +61,8 @@ class ClientHandler(WebSocket):
         try:
             print(">>>", message.data)
             if not(self.idsent):
-                self.send(str({"id": self.client.id}))
+                self.idsent = True
+                self.send(json.dumps({"id": self.client.id}, cls=VectorEncoder, separators=(',',':')).encode('UTF-8'))
             print(self.listeners)
             for i in self.listeners:
                 print("Handling Message")
@@ -80,6 +81,7 @@ class NetworkServer:
         self.store = self.universe.clientDataStore
         ClientHandler.universe = universe
         ClientHandler.store = self.universe.clientDataStore
+        self.store = self.universe.clientDataStore
         self.clients = ClientHandler.clients
 
     def run(self):

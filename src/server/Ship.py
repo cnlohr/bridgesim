@@ -8,7 +8,6 @@ class Ship(Entity):
   def __init__(self, config, universe):
     super().__init__(config, universe)
     self.__dict__.update(config)
-
     self.energy = self.maxEnergy
 
     # How much power Engineering is giving to each component - [0, 1] normally
@@ -24,7 +23,7 @@ class Ship(Entity):
       temp[comp.id] = comp
       self.energySupply[comp] = 1
     self.components = temp
-    self.name = ""
+    self.name = "Ship"
     
   def collide(self, other):
     print("I got hit!")
@@ -54,6 +53,8 @@ class Ship(Entity):
     for i in self.components.values():
       i.energy = factor * duration * self.energySupply[i] * needed[i]
       i.tick(duration)
+      if type(i) == Drive:
+        self.thrustVectors[i.id] = (i.orientation, i.position, i.thrustVector)
     return super().tick(duration)
   
   def tock(self):

@@ -1,13 +1,10 @@
 #!/usr/bin/env python
-import threading
-import socket
-import sys
 import time
 import json
+import threading
 from RemoteFunctionCaller import *
-from SocketNetworker import SocketNetworker
-from UpdateReceiver import UpdateReceiver
 from ws4py.client import WebSocketBaseClient
+from ws4py.client.threadedclient import WebSocketClient
 
 HOST = '192.168.43.29'    # The remote host
 PORT = 9000           # The same port as used by the server
@@ -19,19 +16,18 @@ class VectorEncoder(json.JSONEncoder):
             return list(obj.dimensions)
         return json.JSONEncoder.default(self, obj)
 
-class Client(WebSocketBaseClient):
+class Client(WebSocketClient):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.listeners = []
-    def handshake_ok(self):
-        pass
+        self.daemon = True
     def listen(self):
         return
     def closed(self, code, reason=None):
         print("Closed down", code, reason)
     def received_message(self, m):
-        print(">>", m.data)
-        msg = json.loads(message.data.decode('UTF-8'))
+        print(">>", m)
+        msg = json.loads(m.data.decode('UTF-8'))
         for i in self.listeners:
             i(msg)
     def send(self, data):
@@ -44,30 +40,24 @@ print("Connecting to ", fullpath)
 nw = Client(fullpath, protocols=['http-only', 'chat'])
 nw.connect()
 caller = RemoteFunctionCaller(nw)
-receiver = UpdateReceiver(nw)
 
-threading.Thread(target=nw.listen, daemon=True).start()
+ourCtx = ("ClientUpdater", 0)
+print(caller.ClientUpdater__requestUpdates("entity", 10, context=ourCtx))
 
-try:
-    print(caller.SharedClientDataStore__set("test", "success"))
+print(caller.SharedClientDataStore__set("test", "success"))
+print(caller.SharedClientDataStore__get("test", default="failish"))
 
-    print(caller.SharedClientDataStore__get("test", default="failish"))
+print("What should we call our ship?")
+print(caller.Ship__name(input(), context=("Ship", 0, 0)))
+print(caller.Ship__name(context=("Ship", 0, 1)))
 
-    ourCtx = ("ClientUpdater", 0)
-    print(caller.ClientUpdater__requestUpdates("entity", 30, context=ourCtx))
+print("Enabling shields!")
+print(caller.ShieldGenerator__enable(context=("Component", 0, 0, 3)))
 
-    print("What should we call our ship?")
-    print(caller.Ship__name(input(), context=("Ship", 0, 0)))
-    print(caller.Ship__name(context=("Ship", 0, 1)))
+print("Press enter to make ship go boom . . .")
+input()
+print(caller.WeaponsStation__fire(context=("Component", 0, 0, 2)))
 
-    print("Enabling shields!")
-    print(caller.ShieldGenerator__enable(context=("Component", 0, 0, 3)))
+time.sleep(6)
 
-    print("Press enter to make ship go boom . . .")
-    input()
-    print(caller.WeaponsStation__fire(context=("Component", 0, 0, 2)))
-    time.sleep(6)
-except TimeoutError:
-    print("Timed out.")
-finally:
-    nw.close()
+nw.close()

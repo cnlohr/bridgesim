@@ -14,6 +14,7 @@ function SocketWrapper(socket) {
     }
 
     socket.onmessage = function(evt) {
+	console.log("Receiving: ", evt.data);
 	for (var l in wrap.onMessages.slice(0)) {
 	    // Might need to do atob() here?
 	    wrap.onMessages[l](JSON.parse(evt.data));
@@ -51,6 +52,7 @@ SocketWrapper.prototype.addOnClose = function(cb) {
 
 SocketWrapper.prototype.send = function(data) {
     // FIXME maybe need btoa here?
+    console.log("Sending: ", data);
     this.socket.send(JSON.stringify(data));
 }
 
@@ -66,28 +68,35 @@ function RemoteFunction(socket, seq, name, callback, timeoutCallback) {
 }
 
 RemoteFunction.prototype.listener = function(data) {
-    if (data && "seq" in data) {
-	if (data.seq == this.seq) {
-	    clearTimeout(this.timer);
-	    this.complete = true;
-	    this.callback(data);
+    try {
+	if (data && "seq" in data) {
+	    if (data.seq == this.seq) {
+		clearTimeout(this.timer);
+		this.complete = true;
+		this.callback(data);
 
-	    // if we leave this around we get exponential calls, oops
-	    var ourIndex = this.socket.onMessages.indexOf(this.boundMethod);
-	    delete this.socket.onMessages[ourIndex];
+		// if we leave this around we get exponential calls, oops
+		var ourIndex = this.socket.onMessages.indexOf(this.boundMethod);
+		delete this.socket.onMessages[ourIndex];
+	    }
 	}
+    } catch (e) {
+	console.log("Data is", data);
+	console.log(e);
     }
 };
 
-RemoteFunction.prototype.call = function(context) {
+RemoteFunction.prototype.call = function(context, kwargs) {
+    if (!kwargs) kwargs = {};
     var data = {
 	"seq": this.seq,
 	"op": this.name,
-	"args": Array.slice(arguments, 1),
-	"kwargs": {},
+	"args": Array.prototype.slice.call(arguments, 2),
+	"kwargs": kwargs,
 	"context": context
     };
 
+    // javascript is stupid
     var theese = this;
 
     this.boundMethod = function(data){theese.listener(data);};
@@ -111,16 +120,15 @@ window.client = {
 	this.socket = socket;
 	this.socket.addOnOpen(function(evt) {
 	    console.log("Socket opened. Now calling whoami...");
-	    window.client.call("whoami", null, function(res) {
+	    window.client.call("SharedClientDataStore__set", ["GlobalContext"], function(res) {
 		this.id = res;
-	    });
+	    }, {"key": "testVal", "value": "success"});
 	});
     },
-    call: function(name, context, callback) {
+    call: function(name, context, callback, kwargs) {
 	var tmpSeq = ++this.seq;
 	var rf = new RemoteFunction(this.socket, tmpSeq, name, callback, null);
-	var newArgs = [context];
-	newArgs.concat(Array.slice(arguments, 3));
+	var newArgs = [context, kwargs].concat(Array.prototype.slice.call(arguments, 4));
 	rf.call.apply(rf, newArgs);
     }
 }
@@ -130,9 +138,27 @@ $(function() {
 
     window.client.socket.addOnOpen(function(evt) { console.log("WebSocket is open!"); registerWithServer();});
     //window.client.socket.addOnMessage(function(data) { console.log(data); });
+
+    $("#test-btn").click(function() {
+	window.client.call("SharedClientDataStore__set", ["GlobalContext"], function(res) {
+	    $("#result-text").val(res.result[0] ? ("OK: " + res.result[1]) : "Failed");
+	}, {}, "shipName", prompt("Ship Name"));
+    });
+
+    $("#update-enable").change(function() {
+	window.client.call("ClientUpdater__requestUpdates", ["ClientUpdater", 0], function(res) {}, {}, "entity", this.checked ? parseInt($("#update-freq").val()) : 0);
+    });
+    $("#update-freq").change(function() {
+	if ($("#update-enable").prop("checked")) {
+	    window.client.call("ClientUpdater__requestUpdates", ["ClientUpdater", 0], function(res) {}, {}, "entity", parseInt($(this).val()));
+	}
+    });
 });
 
 function registerWithServer() {
-    window.client.socket.send({"message": "Hello, socket!"});
-    $("#center-btn").click(function(){window.client.call("whoami", null, function(res) {console.log("You are " + res.seq);});});
+    //window.client.socket.send({"message": "Hello, socket!"});
+    $("#center-btn").click(function(){window.client.call("whoami", null, function(res) {console.log("You are " + res.seq);});}, {});
+    window.client.call("SharedClientDataStore__get", ["GlobalContext"], function(res) {
+	$("#result-text").val("From server: " + res.result);
+    }, {}, "shipName");
 }

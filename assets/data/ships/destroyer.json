@@ -1,0 +1,55 @@
+{ "name": "Destroyer",
+  "maxEnergy": 200000,
+  "model": "destroyer.obj",
+  "components": [
+      { "type": "CrewStation",
+	"model": "ball",
+	"hp": 5000,
+	"mass": 1000,
+	"position": [0.0, 0.0, 0.0],
+	"orientation": [0.0, 0.0, 0.0],
+	"members": ["Captain", "Helm", "Communications", "Science", "Engineering"]
+      },
+      { "type": "HullSection",
+	"model": "ball",
+	"hp": 100,
+	"mass": 400,
+	"position": [0.0, 0.0, 30.0],
+	"orientation": [0.0, 0.0, 0.0]
+      },
+      { "type": "WeaponsStation",
+	"model": "ball",
+	"hp": 2000,
+	"mass": 800,
+	"position": [-45.0, 0.0, 0.0],
+	"orientation": [0.0, 0.0, 0.0],
+	"weapons": "tube"
+      },
+      { "type": "ShieldGenerator",
+	"model": "ball",
+	"hp": 5000,
+	"mass": 600,
+	"position": [0.0, 0.0, -15.0],
+	"orientation": [0.0, 0.0, 0.0],
+	"shieldRadius": 60,
+	"shieldHp": 20000,
+	"shieldRecharge": 5
+      },
+      { "type": "Drive",
+	"model": "ball",
+	"hp": 1000,
+	"mass": 2000,
+	"position": [0.0, 0.0, -20.0],
+	"orientation": [0.0, 0.0, 0.0],
+	"propulsion": "impulse"
+      },
+      { "type": "Drive",
+	"model": "ball",
+	"hp": 200,
+	"mass": 8000,
+	"position": [0.0, -5.0, 0.0],
+	"orientation": [0.0, 0.0, 0.0],
+	"propulsion": "warp"
+      }
+  ]
+}

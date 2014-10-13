@@ -1,41 +1,28 @@
-import ctypes
-import time
+import socketserver
 
-cent = ctypes.CDLL("../network/cent.so")
+class MyTCPHandler(SocketServer.BaseRequestHandler):
+    """
+    The RequestHandler class for our server.
 
-StartCentServer = cent.StartCentServer;
-StartCentServer.restype = ctypes.c_void_p;
-CreateCent = cent.CreateCent;
-CreateCent.restype = ctypes.c_void_p;
-ChangeValue = cent.ChangeValue;
-ChangeValue.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int]
-CentServerAddCB = cent.CentServerAddCB;
-CentServerAddCB.argtypes = [ ctypes.c_void_p, ctypes.c_char_p, ctypes.c_void_p, ctypes.c_void_p ];
-CentGetDataFromCent_Float = cent.CentGetDataFromCent;
-CentGetDataFromCent_Float.argtypes = [ ctypes.c_void_p ];
-CentGetDataFromCent_Float.restype = ctypes.POINTER(ctypes.c_float)
+    It is instantiated once per connection to the server, and must
+    override the handle() method to implement communication to the
+    client.
+    """
 
-def my_callback_function( conn, data, ids ):
-        fields = CentGetDataFromCent_Float( data );
-        print (fields[0])
-        print (fields[1])
-        print (ids)
+    def handle(self):
+        # self.request is the TCP socket connected to the client
+        self.data = self.request.recv(1024).strip()
+        print "{} wrote:".format(self.client_address[0])
+        print self.data
+        # just send back the same data, but upper-cased
+        self.request.sendall(self.data.upper())
 
-CENTCB = ctypes.CFUNCTYPE( ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p, ctypes.c_void_p );
-server_handle = StartCentServer(b"0.0.0.0", 8553);
+if __name__ == "__main__":
+    HOST, PORT = "localhost", 9999
 
-gencallback = CENTCB(my_callback_function)
-CentServerAddCB( server_handle, b"/*", gencallback, 44 )
+    # Create the server, binding to localhost on port 9999
+    server = SocketServer.TCPServer((HOST, PORT), MyTCPHandler)
 
-#CentServerAddCB( server_handle, b"/*", CENTCB(my_callback_function), 44 )
-
-compatBytes = bytes
-try:
-  bytes("foo")
-except TypeError:
-  def compatBytes(string):
-    return bytes(string, 'ascii')
-
-def update(dataName, dataList):
-  floats = ctypes.c_float * len(dataList)
-  ChangeValue(server_handle, CreateCent(compatBytes(dataName), 0x80, 1, 4*len(dataList), floats(*dataList)), 1)
+    # Activate the server; this will keep running until you
+    # interrupt the program with Ctrl-C
+    server.serve_forever()

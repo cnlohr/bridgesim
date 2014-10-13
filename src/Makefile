@@ -12,7 +12,7 @@ OBJS:=test.o graphics/graphicscore.o graphics/bitmapfont.o graphics/objreader.o 
 	gui/button.o gui/guibase.o
 
 
-CFLAGS:=-O0 -g -Iutil -Igraphics -Igui -I.
+CFLAGS:=-O0 -g -Iutil -Igraphics -Igui -I. -fPIC
 CFLAGSWIN32:=$(CFLAGS)  -Ifreeglut  -m32  -Iglew -DGLEW_STATIC -Iutil -Igui -I.
 #include "graphicscore.h"
 

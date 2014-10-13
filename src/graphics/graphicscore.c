@@ -476,7 +476,7 @@ int ReadTextureFromFile( struct Texture * t, const char * filename )
 #ifdef USE_PNG
 static void mypngreadfn(png_struct *png, png_byte *p, png_size_t size )
 {
-	int r = fread( p, size, 1, png->io_ptr );
+	int r = fread( p, size, 1, png_get_io_ptr(png));
 }
 #endif
 
@@ -632,10 +632,10 @@ int ReadTextureFromPNG( struct Texture * t, const char * filename )
 
 	png_read_info(png_ptr, info_ptr);
 
-	t->width = info_ptr->width;
-	t->height = info_ptr->height;
-	color_type = info_ptr->color_type;
-	bit_depth = info_ptr->bit_depth;
+	t->width = png_get_image_width(png_ptr, info_ptr);
+	t->height = png_get_image_height(png_ptr, info_ptr);
+	color_type = png_get_color_type(png_ptr, info_ptr);
+	bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 
 	if (color_type == PNG_COLOR_TYPE_PALETTE)
 		png_set_palette_to_rgb(png_ptr);
@@ -653,7 +653,7 @@ int ReadTextureFromPNG( struct Texture * t, const char * filename )
 	row_pointers = (png_bytep*) malloc(sizeof(png_bytep) * t->height);
 	unsigned int y;
 	for ( y=0; y < (unsigned)t->height; y++)
-		row_pointers[y] = (png_byte*) malloc(info_ptr->rowbytes);
+		row_pointers[y] = (png_byte*) malloc(png_get_rowbytes(png_ptr, info_ptr));
 
 	png_read_image(png_ptr, row_pointers);
 

@@ -11,6 +11,7 @@ class EventQueue:
     else:
       self.items = list(items)
       heapq.heapify(self.items)
+
   def add(self, *items):
     """Add items to this event queue, respecting the order."""
     if len(items) < 10:
@@ -20,10 +21,13 @@ class EventQueue:
       newitems = list(items)
       heapq.heapify(newitems)
       self.items = list(heapq.merge(self.items, newitems))
+
   def top(self):
     return self.items[0]
+
   def __len__(self):
     return len(self.items)
+
   def pop(self):
     """Remove and return the next-smallest item from this queue."""
     return heapq.heappop(self.items)
@@ -38,11 +42,13 @@ class Event:
     self.next_due = next_due
     self.repeat_interval = repeat_interval
     self.repeat_count = repeat_count
+
   def execute(self):
     self.callback(*self.callback_args)
     if self.repeat_count > 0:
       self.next_due = self.next_due + self.repeat_interval
       self.repeat_count -= 1
+
   def __lt__(self, other):
     if not isinstance(other, Event):
       raise TypeError("Cannot compare %s to %s" % (self, other))
@@ -81,11 +87,13 @@ class QueueExecutor:
     self.go = True
     self.waiter = threading.Event()
     self.thread.start()
-  def addEvent(self, callback, next_due, repeat_interval = None, repeat_count = 1, *args):      
+
+  def addEvent(self, callback, next_due, repeat_interval = None, repeat_count = 1, *args):
     self.q.add(Event(callback, next_due, args, repeat_interval, repeat_count))
     if next_due < time.time():
       # Wake up, execution thread, this one's late!
       self.waiter.set()
+
   def stop(self):
     self.go = False
     self.waiter.set()

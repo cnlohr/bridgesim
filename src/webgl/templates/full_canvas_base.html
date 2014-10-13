@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block header_includes %}
+  {% if config.DEBUG %}
+    <script src="{{ url_for("static", filename="js/three/three.js") }}"></script>
+    <script src="{{ url_for("static", filename="js/three/OBJLoader.js") }}"></script>
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/common/fullwindow_canvas.css") }}" />
+  {% else %}
+    <script src="{{ url_for("static", filename="js/three/three.min.js") }}"></script>
+    <link rel="stylesheet" href="{{ url_for("static", filename="css/common/fullwindow_canvas.min.css") }}" />
+  {% endif %}
+{% endblock header_includes %}
+
+{% block body %}
+  <canvas id="main-canvas"></canvas>
+  <div id="body-overlay">
+    {% block overlay_body %}{% endblock %}
+  </div>
+{% endblock body %}

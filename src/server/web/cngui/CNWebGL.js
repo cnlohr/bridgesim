@@ -488,16 +488,6 @@ function CNGLCreateShaderAsset( cngl, lname )
 		this.cngl.gl.useProgram(this.Program);
 		this.cngl.currentshader = this;
 
-/*
-		for( k = 0; k < 10; k++ )
-		{
-			
-			var ret = this.cngl.gl.getActiveUniform(this.Program, k );
-			if( ret != null )
-				this.cngl.trace(k +":" + ret.name + "/" + ret.type );
-		}
-*/
-
 		for( var i = 0; i < 8; i++ )
 		{
 			var vv = this.cngl.activetextures[i];
@@ -789,18 +779,23 @@ function CNGLCreateTransformNode( cngl, lname )
 	CNGLCreateNode.call( this, cngl, lname );
 	this._type="TransformNode";
 	this.TransformNodebaserender = this.render;
+	this.screenPlace = new J3DIVector3();
 
 	this.matrix = new J3DIMatrix4();
 	this.matrix.makeIdentity();
 	this.render = function() {
 		var cngl = this.cngl;
-	        temp = new J3DIMatrix4();
+        var temp = new J3DIMatrix4();
+        var temp2 = new J3DIMatrix4();
+        var temp3 = new J3DIMatrix4();
 		var mvMatrix = cngl.uniforms["ModelViewMatrix"].value;
 		var nrmMatrix = cngl.uniforms["NormalMatrix"].value;
 		var perMatrix = cngl.uniforms["PerspectiveMatrix"].value;
 		var mvpMatrix = cngl.uniforms["MVPMatrix"].value;
 
 		temp.load(mvMatrix);
+		temp2.load(nrmMatrix);
+		temp3.load(mvpMatrix);
 
 		mvMatrix.multiply(this.matrix);
 		cngl.uniforms["ModelViewMatrix"].update();
@@ -814,9 +809,21 @@ function CNGLCreateTransformNode( cngl, lname )
 		mvpMatrix.multiply(mvMatrix);
 		cngl.uniforms["MVPMatrix"].update();
 
+
+		//It would be useful to get the actual coordiantes of the object.
+		//gl_Position = MVPMatrix * vPosition;
+		this.screenPlace.load( 0, 0, 0 );
+		this.screenPlace.multVecMatrix( mvpMatrix );
+		this.screenPlace[0] = (this.screenPlace[0] * .5 + .5) * cngl.width;
+		this.screenPlace[1] = (this.screenPlace[1] * -.5 + .5) * cngl.height;	
+		//I think Z is correct.  Should double-check
+		this.screenPlace[2] = mvpMatrix.$matrix.m43 / ((this.screenPlace[2] ) - mvpMatrix.$matrix.m33 );
+
 		this.TransformNodebaserender();
 
 		mvMatrix.load( temp );
+		nrmMatrix.load(temp2);
+		mvpMatrix.load(temp3);
 
 		cngl.uniforms["ModelViewMatrix"].update();
 	}

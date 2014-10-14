@@ -1,14 +1,22 @@
+var cwg; //CNWebGL Context.
+var cwgcanvas; //actual HTML5 Canvas.
+
+var rootperspective; //Perspective view.
+var rootortho;       //Orthographic view.
 
 var gEntities = new Array;    //Index into this with the server ID, Contains full update from server.
 var gEntitiesRev = new Array;
 var gEntitiesID = new Array;  //Arbitrary list of all server IDs
-var gDisplayables = new Array; //index into this with server ID
+
+var gDisplayables = new Array;
+	//index into this with server ID.  
+	//This is the actual transform node for the object.
+
 var gCurrentCameraEye = [10, 10, 10];
 var gCurrentCameraAt = [0, 0, 0];
 var gCurrentCameraUp = [0, 0, 1];
 var gCameraFOV = 45;
 var gCameraFOVTarget = 45; //Change this for smooth motion.
-var rootperspective;
 var gOuterRotateViewX = 0;
 var gOuterRotateViewY = 0;
 var gViewMode = 0;
@@ -34,6 +42,9 @@ function AddNewObjectDISP( serverID, objparams )
 	gDisplayables[serverID] = su;
 	su.matrix.translate( [0,0,0] );
 	rootperspective.children.push( su );
+
+	//TODO: Add an ortho icon.
+	//Right now we can use an IMG tag.
 }
 
 function RemoveObjectDISP( serverID )
@@ -150,8 +161,11 @@ function GameUpdate()
 	{
 		var id = gEntities[i];
 		var su = gDisplayables[i];
-		su.children[0].matrix.makeIdentity();
-		su.children[0].matrix.translate( id.loc );
+		var sc = su.children[0];
+		su.matrix.makeIdentity();
+		su.matrix.translate( id.loc );
+		su.tmphide = false;
+		//console.log( sc.screenPlace );
 	}
 
 	//Who are we looking to/from?
@@ -202,8 +216,8 @@ function GameUpdate()
 
 		//Tricky, we hide the objf so it's not in our face.
 		var su = gDisplayables[vfi];
-		su.children[0].matrix.scale( 0, 0, 0 );
-		gViewMode = 3;
+		su.matrix.scale( 0, 0, 0 );
+		su.tmphide = true;
 
 		gViewMode = 2;
 	}
@@ -215,7 +229,9 @@ function GameUpdate()
 
 		//Tricky, we hide the objf so it's not in our face.
 		var su = gDisplayables[vfi];
-		su.children[0].matrix.scale( 0, 0, 0 );
+		su.matrix.scale( 0, 0, 0 );
+		su.tmphide = true;
+
 		gViewMode = 3;
 	}
 
@@ -247,6 +263,70 @@ function GameUpdate()
 
 	gCameraFOV = gCameraFOV * slk + gCameraFOVTarget * islk;
 	rootperspective.angle = gCameraFOV;
+}
+
+
+var cwgcq;
+
+function GamePostUpdate()
+{
+
+	var tar = document.getElementById('targets');
+
+
+	for (var i in gDisplayables)
+	{
+		var id = gEntities[i];
+		var su = gDisplayables[i];
+		var tarname = "Target"+i;
+
+		var existTarDiv = document.getElementById( tarname );
+		if( !existTarDiv )
+		{
+		console.log( "Adding" );
+			existTarDiv = document.createElement('div');
+			existTarDiv.setAttribute('id',tarname);
+			existTarDiv.setAttribute('class','itarget');
+			tar.appendChild(existTarDiv);
+		}
+
+
+		var guard = 10;
+		if( (su.screenPlace[0] < 0 || su.screenPlace[1] < 0 ||
+			su.screenPlace[0] > cwg.width - guard || su.screenPlace[1] > cwg.height - guard) &&  su.screenPlace[2] >= 1 )
+		{
+			if( su.screenPlace[0] < 0 ) su.screenPlace[0] = 0;
+			if( su.screenPlace[1] < 0 ) su.screenPlace[1] = 0;
+			if( su.screenPlace[0] > cwg.width - guard ) su.screenPlace[0] = cwg.width - guard;
+			if( su.screenPlace[1] > cwg.height - guard ) su.screenPlace[1] = cwg.height - guard;
+
+			existTarDiv.style.left = (su.screenPlace[0]).toString() + "px";
+			existTarDiv.style.top = (su.screenPlace[1]).toString() + "px";
+			existTarDiv.style.visibility = "visible";
+			existTarDiv.innerHTML = '*';
+			//Off the side of the screen
+		}
+		else if( su.screenPlace[2] >= 1 )
+		{
+			existTarDiv.style.left = (su.screenPlace[0]-25).toString() + "px";
+			existTarDiv.style.top = (su.screenPlace[1]-25).toString() + "px";
+			existTarDiv.style.visibility = "visible";
+			var ht = "";
+			if( su.screenPlace[2] > 300 ) ht += '<img src=target.png>';
+			ht += 'ID: ' + i + '<BR>LOC:' + id.loc;
+			existTarDiv.innerHTML = ht;
+		}
+		else
+		{
+			//Too close.
+			existTarDiv.style.visibility = "hidden";			
+		}
+
+		//See:
+		// su.tmphide
+		// su.screenPlace
+		//console.log( su.screenPlace );
+	}
 }
 
 

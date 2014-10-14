@@ -1,0 +1,34 @@
+body{
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+
+.target {
+	position:fixed;
+	top:0px;
+	left:0px;
+	color:#ffffff;
+	text-shadow: 1px 1px #000000;
+}
+
+.corner {
+	position:fixed;
+	top:0px;
+	left:0px;
+}
+
+
+.itarget {
+	position:fixed;
+	top:0px;
+	left:0px;
+	color:#ffffff;
+	text-shadow: 1px 1px #000000;
+
+}
+
